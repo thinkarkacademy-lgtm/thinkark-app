@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThinkArk — Subjective Exam</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#1a2e5a;--navy-mid:#243872;--cream:#f0ede4;--cream-mid:#f8f6f0;--gold:#c9a84c;--border:#e8e5de;--green:#2a9d6e;--red:#e05252;--muted:#7a8399}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Barlow',sans-serif;background:var(--cream-mid);color:var(--navy);min-height:100vh}
+.topbar{background:var(--navy);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-brand{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:2px;color:var(--cream)}
+.tb-exam{font-size:0.8rem;color:rgba(240,237,228,0.5);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.timer{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;color:var(--gold);letter-spacing:2px;background:rgba(255,255,255,0.07);padding:6px 14px;border-radius:8px}
+.timer.warn{color:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.layout{display:grid;grid-template-columns:1fr 380px;min-height:calc(100vh - 56px);gap:0}
+/* PDF Viewer */
+.pdf-panel{background:white;border-right:1px solid var(--border);display:flex;flex-direction:column}
+.pdf-toolbar{padding:10px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--cream-mid)}
+.pdf-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.9rem;color:var(--navy)}
+.page-nav{display:flex;align-items:center;gap:10px}
+.page-btn{width:32px;height:32px;border-radius:7px;border:1.5px solid var(--border);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;font-weight:700;color:var(--navy);transition:all 0.15s}
+.page-btn:hover:not(:disabled){border-color:var(--navy);background:var(--navy);color:white}
+.page-btn:disabled{opacity:0.3;cursor:not-allowed}
+.page-counter{font-size:0.78rem;color:var(--muted);font-weight:600;min-width:60px;text-align:center}
+.pdf-frame-wrap{flex:1;overflow:hidden;position:relative;background:#e8e5de}
+.pdf-pages-container{display:flex;flex-direction:column;height:100%;overflow-y:auto;padding:16px;gap:12px;align-items:center}
+.pdf-page-thumb{background:white;border:1px solid var(--border);border-radius:4px;overflow:hidden;cursor:pointer;transition:all 0.15s;max-width:100%}
+.pdf-page-thumb:hover{border-color:var(--navy)}
+.pdf-page-thumb.active{border-color:var(--gold);border-width:2px}
+.pdf-main-view{background:#e8e5de;flex:1;display:flex;flex-direction:column;align-items:center;overflow-y:auto;padding:20px}
+.pdf-page-display{background:white;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,0.1);max-width:100%;width:560px}
+.pdf-nav-strip{display:flex;align-items:center;justify-content:center;gap:16px;padding:12px;background:white;border-top:1px solid var(--border)}
+.two-panel{display:flex;flex-direction:column;height:calc(100vh - 56px)}
+.pdf-two-up{display:flex;flex:1;overflow:hidden}
+.pdf-thumbnails{width:110px;background:var(--cream-mid);border-right:1px solid var(--border);overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0}
+.thumb-item{background:white;border:1.5px solid var(--border);border-radius:4px;overflow:hidden;cursor:pointer;transition:all 0.12s;position:relative}
+.thumb-item.active{border-color:var(--gold);border-width:2px}
+.thumb-item:hover{border-color:var(--navy-mid)}
+.thumb-label{font-size:0.6rem;color:var(--muted);text-align:center;padding:2px;font-weight:700}
+.pdf-viewer-main{flex:1;overflow-y:auto;padding:16px;display:flex;justify-content:center;background:#ccc}
+.pdf-canvas-wrap{background:white;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-radius:2px;max-width:100%}
+/* Upload panel */
+.upload-panel{padding:24px;overflow-y:auto;display:flex;flex-direction:column;gap:16px}
+.panel-title{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:var(--navy)}
+.panel-sub{font-size:0.8rem;color:var(--muted)}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:24px;text-align:center;cursor:pointer;transition:all 0.2s;background:white}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--navy);background:rgba(26,46,90,0.03)}
+.upload-zone.has-files{border-color:var(--green);background:rgba(42,157,110,0.04)}
+.uz-icon{font-size:2rem;margin-bottom:8px}
+.uz-title{font-weight:700;font-size:0.9rem;color:var(--navy);margin-bottom:4px}
+.uz-sub{font-size:0.75rem;color:var(--muted)}
+.file-list{display:flex;flex-direction:column;gap:6px}
+.file-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:white;border:1px solid var(--border);border-radius:8px}
+.file-thumb{width:40px;height:40px;border-radius:6px;object-fit:cover;border:1px solid var(--border)}
+.file-name{font-size:0.8rem;font-weight:600;color:var(--navy);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-size{font-size:0.7rem;color:var(--muted)}
+.file-remove{width:24px;height:24px;border-radius:50%;border:none;background:rgba(224,82,82,0.1);color:var(--red);cursor:pointer;font-size:0.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.btn{padding:12px 22px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s;width:100%}
+.btn-submit{background:var(--green);color:white}
+.btn-submit:hover{background:#228a5e}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--green);border-radius:3px;transition:width 0.3s}
+.status-box{padding:14px;border-radius:10px;font-size:0.82rem;font-weight:600}
+.status-warning{background:rgba(224,120,50,0.1);color:#e07832;border:1px solid rgba(224,120,50,0.2)}
+.status-success{background:rgba(42,157,110,0.1);color:var(--green);border:1px solid rgba(42,157,110,0.2)}
+.status-info{background:rgba(26,46,90,0.06);color:var(--navy);border:1px solid var(--border)}
+.deadline-badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;font-size:0.75rem;font-weight:700}
+.loading{text-align:center;padding:80px 20px}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);margin-top:14px}
+.submitted-screen{display:none;padding:40px 24px;text-align:center;max-width:480px;margin:0 auto}
+.submitted-icon{font-size:3rem;margin-bottom:16px}
+.submitted-title{font-family:'Barlow Condensed',sans-serif;font-size:1.8rem;font-weight:800;color:var(--navy);margin-bottom:8px}
+.submitted-sub{font-size:0.85rem;color:var(--muted);line-height:1.7;margin-bottom:24px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:16px">
+    <div class="tb-brand">THINKARK</div>
+    <div class="tb-exam" id="tb-exam">Loading…</div>
+  </div>
+  <div class="timer" id="timer">--:--</div>
+</div>
+
+<div class="loading" id="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-text">Loading exam paper…</div>
+</div>
+
+<div class="layout" id="exam-screen" style="display:none">
+  <!-- PDF Panel -->
+  <div class="two-panel" id="pdf-panel">
+    <div class="pdf-toolbar">
+      <div class="pdf-title" id="pdf-title">Question Paper</div>
+      <div class="page-nav">
+        <button class="page-btn" id="prev-page" onclick="changePage(-1)">&#8592;</button>
+        <div class="page-counter" id="page-counter">— / —</div>
+        <button class="page-btn" id="next-page" onclick="changePage(1)">&#8594;</button>
+      </div>
+    </div>
+    <div class="pdf-two-up">
+      <div class="pdf-thumbnails" id="pdf-thumbnails">
+        <div style="font-size:0.6rem;color:var(--muted);text-align:center;padding:4px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Pages</div>
+      </div>
+      <div class="pdf-viewer-main" id="pdf-viewer-main">
+        <div id="pdf-canvas-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Panel -->
+  <div class="upload-panel">
+    <div>
+      <div class="panel-title" id="up-title">Submit Your Answer</div>
+      <div class="panel-sub" id="up-sub">Upload clear photographs of your answer sheets</div>
+    </div>
+    <div id="deadline-area"></div>
+    <div id="status-area"></div>
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+      <input type="file" id="file-input" accept="image/*" multiple style="display:none" onchange="handleFiles(this.files)">
+      <div class="uz-icon">📸</div>
+      <div class="uz-title">Tap to add photos</div>
+      <div class="uz-sub">JPG, PNG supported · Multiple pages allowed</div>
+    </div>
+
+    <div class="file-list" id="file-list"></div>
+
+    <div id="upload-progress" style="display:none">
+      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:6px" id="progress-label">Uploading…</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <button class="btn btn-submit" id="submit-btn" onclick="submitAnswers()" disabled>
+      Submit Answer Sheets
+    </button>
+    <div style="font-size:0.72rem;color:var(--muted);text-align:center">Once submitted you cannot re-upload. Ensure all pages are clear before submitting.</div>
+  </div>
+</div>
+
+<div class="submitted-screen" id="submitted-screen">
+  <div class="submitted-icon">✅</div>
+  <div class="submitted-title">Submitted Successfully</div>
+  <div class="submitted-sub">Your answer sheets have been submitted. Your teacher will review and update your marks shortly. You will see your result in the Performance section.</div>
+  <button class="btn btn-submit" style="max-width:200px;margin:0 auto" onclick="window.location.href='dashboard-connected.html'">Back to Dashboard</button>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+const SUPABASE_URL='https://gaizlwyhthiqguqjfyuq.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCOpOiJzdXBhYmFzZSIsInJlZiI6ImdhaXpsd3lodGhpcWd1cWpmeXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY3OTEsImV4cCI6MjA4ODczMjc5MX0.VTN6TwKFLzmfpnOFOPH5XXnbwLQ3No45sitcRA-Cakk';
+const {createClient}=supabase;
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+
+// Fix the key
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhaXpsd3lodGhpcWd1cWpmeXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY3OTEsImV4cCI6MjA4ODczMjc5MX0.VTN6TwKFLzmfpnOFOPH5XXnbwLQ3No45sitcRA-Cakk';
+const sb2=createClient(SUPABASE_URL,SB_KEY);
+
+let currentUser=null,studentData=null,exam=null;
+let pdfDoc=null,currentPage=1,totalPages=0;
+let selectedFiles=[],timerInterval=null,secondsLeft=0;
+
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+async function init(){
+  const {data:{session}}=await sb2.auth.getSession();
+  if(!session){window.location.href='login-connected.html';return;}
+  currentUser=session.user;
+  const params=new URLSearchParams(window.location.search);
+  const examId=params.get('exam_id');
+  if(!examId){alert('No exam specified.');window.location.href='dashboard-connected.html';return;}
+  const {data:stu}=await sb2.from('students').select('*').eq('user_id',currentUser.id).single();
+  studentData=stu;
+  const {data:examData}=await sb2.from('exams').select('*, subjects(name)').eq('id',examId).single();
+  if(!examData){alert('Exam not found.');window.location.href='dashboard-connected.html';return;}
+  exam=examData;
+  document.getElementById('tb-exam').textContent=exam.title;
+  document.getElementById('up-title').textContent=exam.title;
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('exam-screen').style.display='grid';
+
+  // Check already submitted
+  if(studentData){
+    const {data:sub}=await sb2.from('submissions').select('id,submitted_at').eq('student_id',studentData.id).eq('exam_id',examId).single();
+    if(sub){
+      document.getElementById('status-area').innerHTML='<div class="status-success">✓ You submitted this exam on '+new Date(sub.submitted_at).toLocaleString()+'</div>';
+      document.getElementById('upload-zone').style.pointerEvents='none';document.getElementById('upload-zone').style.opacity='0.5';
+      document.getElementById('submit-btn').disabled=true;
+    }
+  }
+
+  // Deadline
+  if(exam.end_time){
+    const end=new Date(exam.end_time);
+    const now=new Date();
+    if(now>end){
+      document.getElementById('deadline-area').innerHTML='<div class="status-warning">⚠ Submission deadline has passed ('+end.toLocaleString()+')</div>';
+      document.getElementById('submit-btn').disabled=true;
+      document.getElementById('upload-zone').style.pointerEvents='none';
+    } else {
+      document.getElementById('deadline-area').innerHTML='<div class="deadline-badge" style="background:rgba(42,157,110,0.1);color:var(--green);border:1px solid rgba(42,157,110,0.2)">⏰ Submit before: '+end.toLocaleString()+'</div>';
+      secondsLeft=Math.floor((end-now)/1000);
+      timerInterval=setInterval(tickTimer,1000);tickTimer();
+    }
+  } else {
+    document.getElementById('timer').textContent='Open';
+  }
+
+  // Load PDF
+  if(exam.paper_url){
+    document.getElementById('pdf-title').textContent='Question Paper — '+exam.title;
+    loadPdf(exam.paper_url);
+  } else {
+    document.getElementById('pdf-canvas-container').innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);font-size:0.85rem">No question paper attached. Check with your teacher.</div>';
+  }
+}
+
+function tickTimer(){
+  if(secondsLeft<=0){clearInterval(timerInterval);document.getElementById('timer').textContent='TIME UP';document.getElementById('submit-btn').disabled=true;return;}
+  const h=Math.floor(secondsLeft/3600);
+  const m=String(Math.floor((secondsLeft%3600)/60)).padStart(2,'0');
+  const s=String(secondsLeft%60).padStart(2,'0');
+  const el=document.getElementById('timer');
+  el.textContent=(h>0?h+'h ':'')+m+':'+s;
+  if(secondsLeft<=300)el.classList.add('warn');
+  secondsLeft--;
+}
+
+async function loadPdf(url){
+  document.getElementById('pdf-canvas-container').innerHTML='<div style="padding:30px;text-align:center"><div class="spinner"></div><div style="margin-top:10px;font-size:0.8rem;color:var(--muted)">Loading paper…</div></div>';
+  try{
+    pdfDoc=await pdfjsLib.getDocument(url).promise;
+    totalPages=pdfDoc.numPages;
+    document.getElementById('page-counter').textContent='1 / '+totalPages;
+    document.getElementById('prev-page').disabled=true;
+    document.getElementById('next-page').disabled=totalPages<=1;
+    renderThumbnails();
+    renderPage(1);
+  } catch(e){
+    document.getElementById('pdf-canvas-container').innerHTML='<div style="padding:30px;text-align:center;color:var(--red);font-size:0.85rem">Could not load PDF. Try downloading it instead.</div>';
+  }
+}
+
+async function renderPage(num){
+  currentPage=num;
+  document.getElementById('page-counter').textContent=num+' / '+totalPages;
+  document.getElementById('prev-page').disabled=num<=1;
+  document.getElementById('next-page').disabled=num>=totalPages;
+  document.querySelectorAll('.thumb-item').forEach(function(t,i){t.classList.toggle('active',i===num-1);});
+  const page=await pdfDoc.getPage(num);
+  const viewport=page.getViewport({scale:1.4});
+  const canvas=document.createElement('canvas');
+  canvas.width=viewport.width;canvas.height=viewport.height;
+  canvas.style.maxWidth='100%';canvas.style.display='block';
+  const ctx=canvas.getContext('2d');
+  await page.render({canvasContext:ctx,viewport}).promise;
+  const wrap=document.createElement('div');
+  wrap.className='pdf-canvas-wrap';
+  wrap.appendChild(canvas);
+  document.getElementById('pdf-canvas-container').innerHTML='';
+  document.getElementById('pdf-canvas-container').appendChild(wrap);
+  document.getElementById('pdf-viewer-main').scrollTop=0;
+}
+
+async function renderThumbnails(){
+  const container=document.getElementById('pdf-thumbnails');
+  container.innerHTML='<div style="font-size:0.6rem;color:var(--muted);text-align:center;padding:4px;font-weight:700;text-transform:uppercase;letter-spacing:1px">Pages</div>';
+  for(let i=1;i<=totalPages;i++){
+    const page=await pdfDoc.getPage(i);
+    const viewport=page.getViewport({scale:0.2});
+    const canvas=document.createElement('canvas');
+    canvas.width=viewport.width;canvas.height=viewport.height;
+    canvas.style.width='100%';canvas.style.display='block';
+    await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+    const item=document.createElement('div');
+    item.className='thumb-item'+(i===1?' active':'');
+    item.appendChild(canvas);
+    const lbl=document.createElement('div');
+    lbl.className='thumb-label';lbl.textContent=i;
+    item.appendChild(lbl);
+    const pageNum=i;
+    item.onclick=function(){renderPage(pageNum);};
+    container.appendChild(item);
+  }
+}
+
+function changePage(delta){renderPage(Math.max(1,Math.min(totalPages,currentPage+delta)));}
+
+// File handling
+function handleDragOver(e){e.preventDefault();document.getElementById('upload-zone').classList.add('drag');}
+function handleDragLeave(){document.getElementById('upload-zone').classList.remove('drag');}
+function handleDrop(e){e.preventDefault();document.getElementById('upload-zone').classList.remove('drag');handleFiles(e.dataTransfer.files);}
+
+function handleFiles(files){
+  Array.from(files).forEach(function(f){
+    if(!f.type.startsWith('image/')){alert(f.name+' is not an image.');return;}
+    if(f.size>10*1024*1024){alert(f.name+' is too large. Max 10MB per photo.');return;}
+    selectedFiles.push(f);
+  });
+  renderFileList();
+}
+
+function renderFileList(){
+  const list=document.getElementById('file-list');
+  if(selectedFiles.length===0){list.innerHTML='';document.getElementById('submit-btn').disabled=true;document.getElementById('upload-zone').classList.remove('has-files');return;}
+  document.getElementById('upload-zone').classList.add('has-files');
+  document.getElementById('upload-zone').querySelector('.uz-title').textContent=selectedFiles.length+' photo(s) selected';
+  document.getElementById('submit-btn').disabled=false;
+  list.innerHTML='';
+  selectedFiles.forEach(function(f,i){
+    const item=document.createElement('div');
+    item.className='file-item';
+    const img=document.createElement('img');
+    img.className='file-thumb';
+    img.src=URL.createObjectURL(f);
+    const info=document.createElement('div');
+    info.style.flex='1';info.style.overflow='hidden';
+    info.innerHTML='<div class="file-name">Page '+(i+1)+': '+f.name+'</div><div class="file-size">'+Math.round(f.size/1024)+'KB</div>';
+    const del=document.createElement('button');
+    del.className='file-remove';del.textContent='✕';
+    del.onclick=function(){selectedFiles.splice(i,1);renderFileList();};
+    item.appendChild(img);item.appendChild(info);item.appendChild(del);
+    list.appendChild(item);
+  });
+}
+
+async function submitAnswers(){
+  if(selectedFiles.length===0){alert('Please add at least one photo.');return;}
+  if(!confirm('Submit '+selectedFiles.length+' photo(s)? You cannot re-upload after this.'))return;
+  document.getElementById('submit-btn').disabled=true;
+  document.getElementById('upload-progress').style.display='block';
+  const uploadedUrls=[];
+  for(let i=0;i<selectedFiles.length;i++){
+    const f=selectedFiles[i];
+    document.getElementById('progress-label').textContent='Uploading photo '+(i+1)+' of '+selectedFiles.length+'…';
+    document.getElementById('progress-fill').style.width=Math.round(((i)/selectedFiles.length)*100)+'%';
+    const path='submissions/'+exam.id+'/'+(studentData?studentData.id:currentUser.id)+'/'+Date.now()+'_'+i+'_'+f.name;
+    const {data,error}=await sb2.storage.from('submissions').upload(path,f,{upsert:true});
+    if(error){alert('Upload failed: '+error.message);document.getElementById('submit-btn').disabled=false;return;}
+    const {data:urlData}=sb2.storage.from('submissions').getPublicUrl(path);
+    uploadedUrls.push(urlData.publicUrl);
+  }
+  document.getElementById('progress-fill').style.width='90%';
+  document.getElementById('progress-label').textContent='Saving submission…';
+  const {error:subError}=await sb2.from('submissions').insert({
+    exam_id:exam.id,
+    student_id:studentData?studentData.id:null,
+    file_urls:uploadedUrls
+  });
+  if(subError){alert('Submission failed: '+subError.message);document.getElementById('submit-btn').disabled=false;return;}
+  document.getElementById('progress-fill').style.width='100%';
+  clearInterval(timerInterval);
+  document.getElementById('exam-screen').style.display='none';
+  document.getElementById('submitted-screen').style.display='block';
+}
+
+init();
+</script>
+</body>
+</html>
