@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ThinkArk — Exam</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#1a2e5a;--navy-mid:#243872;--cream:#f0ede4;--cream-mid:#f8f6f0;--gold:#c9a84c;--border:#e8e5de;--green:#2a9d6e;--red:#e05252;--orange:#e07832;--muted:#7a8399}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Barlow',sans-serif;background:var(--cream-mid);color:var(--navy);min-height:100vh}
+.topbar{background:var(--navy);padding:0 24px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.tb-left{display:flex;align-items:center;gap:16px}
+.tb-brand{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:2px;color:var(--cream)}
+.tb-exam{font-size:0.8rem;color:rgba(240,237,228,0.5);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.timer{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:800;color:var(--gold);letter-spacing:2px;background:rgba(255,255,255,0.07);padding:6px 14px;border-radius:8px}
+.timer.warn{color:var(--red);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+.exam-layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 56px)}
+.exam-sidebar{background:white;border-right:1px solid var(--border);padding:16px;overflow-y:auto;position:sticky;top:56px;height:calc(100vh - 56px)}
+.section-group{margin-bottom:18px}
+.section-label{font-size:0.62rem;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--border)}
+.q-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.q-dot{width:100%;aspect-ratio:1;border-radius:6px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.62rem;font-weight:700;cursor:pointer;transition:all 0.15s;background:white;color:var(--navy)}
+.q-dot:hover{border-color:var(--navy)}
+.q-dot.answered{background:var(--navy);color:white;border-color:var(--navy)}
+.q-dot.current{border-color:var(--gold);color:var(--gold)}
+.q-dot.answered.current{background:var(--navy-mid);border-color:var(--gold);color:var(--gold)}
+.sidebar-stats{background:var(--cream-mid);border-radius:8px;padding:10px 12px;margin-bottom:12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat-mini{text-align:center}
+.stat-mini-val{font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:800;color:var(--navy)}
+.stat-mini-lbl{font-size:0.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+.sidebar-legend{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:0.65rem;color:var(--muted)}
+.leg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.exam-main{padding:24px;max-width:760px}
+.q-card{background:white;border:1px solid var(--border);border-radius:14px;padding:28px;margin-bottom:16px}
+.q-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.q-num-label{font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--muted)}
+.q-section-tag{font-size:0.65rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:white;background:var(--navy);padding:2px 10px;border-radius:20px}
+.q-marks{font-size:0.72rem;color:var(--gold);font-weight:700}
+.q-text{font-size:1rem;font-weight:600;color:var(--navy);line-height:1.7;margin-bottom:20px}
+.options{display:flex;flex-direction:column;gap:10px}
+.option{display:flex;align-items:center;gap:14px;padding:13px 16px;border:2px solid var(--border);border-radius:10px;cursor:pointer;transition:all 0.15s}
+.option:hover{border-color:var(--navy);background:rgba(26,46,90,0.03)}
+.option.selected{border-color:var(--navy);background:rgba(26,46,90,0.06)}
+.opt-label{width:30px;height:30px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:0.85rem;flex-shrink:0;transition:all 0.15s}
+.option.selected .opt-label{background:var(--navy);color:white;border-color:var(--navy)}
+.opt-text{font-size:0.9rem;color:var(--navy);line-height:1.5}
+.nav-row{display:flex;align-items:center;justify-content:space-between;padding:16px 0;border-top:1px solid var(--border);margin-top:8px}
+.btn{padding:10px 22px;border-radius:9px;border:none;font-family:'Barlow Condensed',sans-serif;font-size:0.92rem;font-weight:700;letter-spacing:0.5px;cursor:pointer;transition:all 0.15s}
+.btn-primary{background:var(--navy);color:var(--cream)}
+.btn-primary:hover{background:var(--navy-mid)}
+.btn-secondary{background:white;color:var(--navy);border:1.5px solid var(--border)}
+.btn-secondary:hover{border-color:var(--navy)}
+.btn-submit{background:var(--green);color:white}
+.btn-clear{background:rgba(224,82,82,0.08);color:var(--red);border:1.5px solid rgba(224,82,82,0.2);padding:8px 14px;font-size:0.78rem}
+.result-screen{display:none;padding:24px;max-width:800px;margin:0 auto}
+.result-hero{background:var(--navy);border-radius:20px;padding:40px;text-align:center;margin-bottom:24px;position:relative;overflow:hidden}
+.result-hero::after{content:'';position:absolute;right:-80px;top:-80px;width:280px;height:280px;border-radius:50%;border:60px solid rgba(201,168,76,0.08)}
+.score-big{font-family:'Barlow Condensed',sans-serif;font-size:4rem;font-weight:800;color:var(--gold);line-height:1}
+.score-label{font-size:0.75rem;color:rgba(240,237,228,0.45);letter-spacing:2px;text-transform:uppercase;margin-top:4px}
+.grade-pill{margin-top:14px;display:inline-block;padding:5px 20px;background:rgba(201,168,76,0.15);border:1px solid rgba(201,168,76,0.3);border-radius:30px;font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:800;color:var(--gold)}
+.result-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.rs{background:white;border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center}
+.rs-val{font-family:'Barlow Condensed',sans-serif;font-size:1.5rem;font-weight:800;color:var(--navy)}
+.rs-lbl{font-size:0.68rem;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:1px}
+.section-result{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:10px}
+.sr-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sr-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.95rem}
+.sr-score{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.1rem;color:var(--green)}
+.sr-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.sr-fill{height:100%;border-radius:3px}
+.review-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:10px}
+.review-q{font-size:0.85rem;font-weight:600;line-height:1.6;margin-bottom:6px}
+.loading{text-align:center;padding:80px 20px}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--navy);border-radius:50%;animation:spin 0.6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:var(--navy);margin-top:14px}
+.loading-sub{font-size:0.82rem;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="tb-left">
+    <div class="tb-brand">THINKARK</div>
+    <div class="tb-exam" id="tb-exam">Loading…</div>
+  </div>
+  <div class="timer" id="timer">--:--</div>
+</div>
+
+<div class="loading" id="loading-screen">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Loading your exam…</div>
+  <div class="loading-sub" id="loading-sub">Please wait</div>
+</div>
+
+<div class="exam-layout" id="exam-screen" style="display:none">
+  <div class="exam-sidebar">
+    <div class="sidebar-stats">
+      <div class="stat-mini"><div class="stat-mini-val" id="stat-answered">0</div><div class="stat-mini-lbl">Answered</div></div>
+      <div class="stat-mini"><div class="stat-mini-val" id="stat-remaining">0</div><div class="stat-mini-lbl">Remaining</div></div>
+    </div>
+    <div id="section-nav"></div>
+    <div class="sidebar-legend">
+      <div class="leg-item"><div class="leg-dot" style="background:var(--navy)"></div>Answered</div>
+      <div class="leg-item"><div class="leg-dot" style="background:white;border:1.5px solid var(--border)"></div>Not visited</div>
+      <div class="leg-item"><div class="leg-dot" style="border:1.5px solid var(--gold)"></div>Current</div>
+    </div>
+    <div style="margin-top:16px">
+      <button class="btn btn-submit" style="width:100%;padding:12px" onclick="confirmSubmit()">Submit Exam</button>
+    </div>
+  </div>
+  <div class="exam-main">
+    <div id="question-area"></div>
+    <div class="nav-row">
+      <button class="btn btn-secondary" id="btn-prev" onclick="goTo(currentQ-1)">← Previous</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-clear" onclick="clearAnswer()">Clear</button>
+        <span style="font-size:0.78rem;color:var(--muted)" id="q-counter">1 / 0</span>
+      </div>
+      <button class="btn btn-primary" id="btn-next" onclick="goTo(currentQ+1)">Next →</button>
+    </div>
+  </div>
+</div>
+
+<div class="result-screen" id="result-screen">
+  <div class="result-hero">
+    <div class="score-big" id="res-score">—</div>
+    <div class="score-label">Your Score</div>
+    <div class="grade-pill" id="res-grade">—</div>
+    <div style="color:rgba(240,237,228,0.4);font-size:0.75rem;margin-top:10px" id="res-time">—</div>
+  </div>
+  <div class="result-stats">
+    <div class="rs"><div class="rs-val" id="res-total">—</div><div class="rs-lbl">Total Marks</div></div>
+    <div class="rs"><div class="rs-val" id="res-correct" style="color:var(--green)">—</div><div class="rs-lbl">Correct</div></div>
+    <div class="rs"><div class="rs-val" id="res-wrong" style="color:var(--red)">—</div><div class="rs-lbl">Wrong</div></div>
+    <div class="rs"><div class="rs-val" id="res-skipped" style="color:var(--muted)">—</div><div class="rs-lbl">Skipped</div></div>
+  </div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;margin-bottom:10px">Section-wise Score</div>
+  <div id="section-results" style="margin-bottom:20px"></div>
+  <div style="font-family:'Barlow Condensed',sans-serif;font-size:1rem;font-weight:700;margin-bottom:10px">Answer Review</div>
+  <div id="answer-review"></div>
+  <div style="text-align:center;margin-top:24px">
+    <button class="btn btn-primary" onclick="window.location.href='dashboard-connected.html'">← Back to Dashboard</button>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://gaizlwyhthiqguqjfyuq.supabase.co';
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhaXpsd3lodGhpcWd1cWpmeXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY3OTEsImV4cCI6MjA4ODczMjc5MX0.VTN6TwKFLzmfpnOFOPH5XXnbwLQ3No45sitcRA-Cakk';
+const {createClient}=supabase;
+const sb=createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null,studentData=null,exam=null,questions=[],answers={},currentQ=0,timerInterval=null,secondsLeft=0,startTime=Date.now();
+
+async function init(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='login-connected.html';return;}
+  currentUser=session.user;
+  const params=new URLSearchParams(window.location.search);
+  const examId=params.get('exam_id');
+  if(!examId){alert('No exam specified.');window.location.href='dashboard-connected.html';return;}
+  const {data:stu}=await sb.from('students').select('*').eq('user_id',currentUser.id).single();
+  studentData=stu;
+  if(studentData){
+    const {data:existing}=await sb.from('results').select('id').eq('student_id',studentData.id).eq('exam_id',examId).single();
+    if(existing){alert('You have already submitted this exam.');window.location.href='dashboard-connected.html';return;}
+  }
+  const {data:examData}=await sb.from('exams').select('*, subjects(name)').eq('id',examId).single();
+  if(!examData){alert('Exam not found.');window.location.href='dashboard-connected.html';return;}
+  exam=examData;
+  const {data:qs}=await sb.from('questions').select('*').eq('exam_id',examId).order('order_index');
+  questions=qs||[];
+  document.getElementById('tb-exam').textContent=exam.title;
+
+  // Time window enforcement
+  const now = new Date();
+  if(exam.start_time && now < new Date(exam.start_time)){
+    const opts={day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:true};
+    document.getElementById('loading-text').textContent='Exam not available yet';
+    document.getElementById('loading-sub').textContent='Opens on '+new Date(exam.start_time).toLocaleString('en-IN',opts);
+    return;
+  }
+  if(exam.end_time && now > new Date(exam.end_time)){
+    document.getElementById('loading-text').textContent='Exam has ended';
+    document.getElementById('loading-sub').textContent='This exam is no longer accepting submissions.';
+    return;
+  }
+
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('exam-screen').style.display='grid';
+  renderSidebar();
+  goTo(0);
+
+  // Timer: always derived from end_time (= start_time + duration, set by admin)
+  // Fallback to duration_minutes if end_time not set
+  if(exam.end_time){
+    secondsLeft = Math.max(0, Math.floor((new Date(exam.end_time) - now) / 1000));
+    timerInterval=setInterval(tickTimer,1000);
+    tickTimer();
+  } else if(exam.duration_minutes){
+    secondsLeft=exam.duration_minutes*60;
+    timerInterval=setInterval(tickTimer,1000);
+    tickTimer();
+  } else {
+    document.getElementById('timer').textContent='Open';
+  }
+}
+
+function tickTimer(){
+  if(secondsLeft<=0){clearInterval(timerInterval);submitExam();return;}
+  const m=String(Math.floor(secondsLeft/60)).padStart(2,'0');
+  const s=String(secondsLeft%60).padStart(2,'0');
+  const el=document.getElementById('timer');
+  el.textContent=m+':'+s;
+  if(secondsLeft<=120)el.classList.add('warn');
+  secondsLeft--;
+}
+
+function getSections(){
+  const sections=[],seen=new Set();
+  questions.forEach(function(q){const s=q.section||'General';if(!seen.has(s)){seen.add(s);sections.push(s);}});
+  return sections;
+}
+
+function renderSidebar(){
+  const sections=getSections();
+  const answered=Object.keys(answers).length;
+  document.getElementById('stat-answered').textContent=answered;
+  document.getElementById('stat-remaining').textContent=questions.length-answered;
+  let html='';
+  sections.forEach(function(section){
+    const sqs=questions.filter(function(q){return(q.section||'General')===section;});
+    html+='<div class="section-group"><div class="section-label">'+section+' ('+sqs.length+'Q)</div><div class="q-grid">';
+    sqs.forEach(function(q){
+      const idx=questions.indexOf(q);
+      const cls=(answers[idx]!==undefined?' answered':'')+(idx===currentQ?' current':'');
+      html+='<div class="q-dot'+cls+'" onclick="goTo('+idx+')">'+(idx+1)+'</div>';
+    });
+    html+='</div></div>';
+  });
+  document.getElementById('section-nav').innerHTML=html;
+}
+
+function goTo(idx){
+  if(idx<0||idx>=questions.length)return;
+  currentQ=idx;
+  const q=questions[idx];
+  const opts=[['A',q.option_a],['B',q.option_b],['C',q.option_c],['D',q.option_d]].filter(function(o){return o[1];});
+  const selected=answers[idx];
+  let html='<div class="q-card">';
+  html+='<div class="q-header"><div class="q-num-label">Question '+(idx+1)+' of '+questions.length+'</div>';
+  html+='<div style="display:flex;align-items:center;gap:8px"><div class="q-section-tag">'+(q.section||'General')+'</div>';
+  html+='<div class="q-marks">'+(q.marks||1)+' mark'+((q.marks||1)>1?'s':'')+'</div></div></div>';
+  html+='<div class="q-text">'+q.question_text+'</div><div class="options">';
+  opts.forEach(function(opt){
+    const cls=selected===opt[0]?' selected':'';
+    html+='<div class="option'+cls+'" onclick="selectAnswer('+idx+',\''+opt[0]+'\')"><div class="opt-label">'+opt[0]+'</div><div class="opt-text">'+opt[1]+'</div></div>';
+  });
+  html+='</div></div>';
+  document.getElementById('question-area').innerHTML=html;
+  document.getElementById('q-counter').textContent=(idx+1)+' / '+questions.length;
+  document.getElementById('btn-prev').style.visibility=idx===0?'hidden':'visible';
+  const nextBtn=document.getElementById('btn-next');
+  if(idx===questions.length-1){
+    nextBtn.textContent='Submit Exam';nextBtn.className='btn btn-submit';nextBtn.onclick=confirmSubmit;
+  } else {
+    nextBtn.textContent='Next →';nextBtn.className='btn btn-primary';nextBtn.onclick=function(){goTo(currentQ+1);};
+  }
+  renderSidebar();
+}
+
+function selectAnswer(qIdx,option){answers[qIdx]=option;goTo(qIdx);}
+function clearAnswer(){delete answers[currentQ];goTo(currentQ);}
+
+function confirmSubmit(){
+  const skipped=questions.length-Object.keys(answers).length;
+  if(skipped>0&&!confirm('You have '+skipped+' unanswered question(s). Submit anyway?'))return;
+  clearInterval(timerInterval);
+  submitExam();
+}
+
+async function submitExam(){
+  document.getElementById('exam-screen').style.display='none';
+  document.getElementById('loading-screen').style.display='block';
+  document.getElementById('loading-text').textContent='Submitting your exam…';
+  let correct=0,wrong=0,marksObtained=0;
+  questions.forEach(function(q,i){
+    if(answers[i]===undefined)return;
+    if(answers[i]===q.correct_option){correct++;marksObtained+=(q.marks||1);}
+    else wrong++;
+  });
+  const skipped=questions.length-correct-wrong;
+  if(studentData){
+    await sb.from('results').insert({student_id:studentData.id,exam_id:exam.id,marks_obtained:marksObtained,total_marks:exam.total_marks});
+  }
+  const timeTaken=Math.floor((Date.now()-startTime)/1000);
+  const pct=Math.round((marksObtained/exam.total_marks)*100);
+  const grade=pct>=90?'A+':pct>=80?'A':pct>=70?'B':pct>=60?'C':pct>=50?'D':'F';
+  document.getElementById('loading-screen').style.display='none';
+  document.getElementById('result-screen').style.display='block';
+  document.getElementById('res-score').textContent=marksObtained+' / '+exam.total_marks;
+  document.getElementById('res-grade').textContent=grade+' · '+pct+'%';
+  document.getElementById('res-time').textContent='Time taken: '+Math.floor(timeTaken/60)+'m '+timeTaken%60+'s';
+  document.getElementById('res-total').textContent=exam.total_marks;
+  document.getElementById('res-correct').textContent=correct;
+  document.getElementById('res-wrong').textContent=wrong;
+  document.getElementById('res-skipped').textContent=skipped;
+  let secHtml='';
+  getSections().forEach(function(section){
+    const sqs=questions.filter(function(q){return(q.section||'General')===section;});
+    let sc=0,sm=0;
+    sqs.forEach(function(q){const idx=questions.indexOf(q);sm+=(q.marks||1);if(answers[idx]===q.correct_option)sc+=(q.marks||1);});
+    const spct=sm>0?Math.round((sc/sm)*100):0;
+    secHtml+='<div class="section-result"><div class="sr-header"><div class="sr-name">'+section+'</div><div class="sr-score">'+sc+' / '+sm+' ('+spct+'%)</div></div><div class="sr-bar"><div class="sr-fill" style="width:'+spct+'%;background:'+(spct>=60?'var(--green)':'var(--orange)')+'"></div></div></div>';
+  });
+  document.getElementById('section-results').innerHTML=secHtml;
+  let revHtml='';
+  questions.forEach(function(q,i){
+    const given=answers[i];
+    const isCorrect=given===q.correct_option;
+    const isSkipped=!given;
+    const icon=isSkipped?'○':isCorrect?'✓':'✗';
+    const iconColor=isSkipped?'var(--muted)':isCorrect?'var(--green)':'var(--red)';
+    revHtml+='<div class="review-card"><div style="display:flex;gap:10px;align-items:flex-start"><div style="font-weight:800;color:'+iconColor+';flex-shrink:0;margin-top:2px">'+icon+'</div><div><div style="font-size:0.62rem;color:var(--muted);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">'+(q.section||'General')+' · Q'+(i+1)+'</div><div class="review-q">'+q.question_text+'</div><div style="font-size:0.78rem;display:flex;gap:12px;flex-wrap:wrap">';
+    if(isSkipped)revHtml+='<span style="color:var(--muted)">Skipped</span>';
+    else if(isCorrect)revHtml+='<span style="color:var(--green);font-weight:700">✓ '+given+' — Correct</span>';
+    else revHtml+='<span style="color:var(--red);font-weight:700">✗ Your answer: '+given+'</span><span style="color:var(--green);font-weight:700">Correct: '+q.correct_option+'</span>';
+    revHtml+='</div></div></div></div>';
+  });
+  document.getElementById('answer-review').innerHTML=revHtml;
+}
+
+init();
+</script>
+</body>
+</html>
