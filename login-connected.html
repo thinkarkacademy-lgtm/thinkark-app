@@ -123,7 +123,7 @@
 
   <div class="form-group">
     <label id="emailLabel">Email Address</label>
-    <input type="email" id="emailInput" placeholder="your@email.com" autocomplete="email">
+    <input type="text" id="emailInput" placeholder="your@email.com" autocomplete="username">
   </div>
 
   <div class="form-group">
@@ -174,6 +174,17 @@
     currentRole = role;
     document.getElementById('btn-student').classList.toggle('active', role === 'student');
     document.getElementById('btn-admin').classList.toggle('active', role === 'admin');
+    const emailInput = document.getElementById('emailInput');
+    const emailLabel = document.getElementById('emailLabel');
+    if (role === 'student') {
+      emailLabel.textContent = 'Roll Number';
+      emailInput.placeholder = 'e.g. 202607001';
+      emailInput.type = 'text';
+    } else {
+      emailLabel.textContent = 'Email Address';
+      emailInput.placeholder = 'your@email.com';
+      emailInput.type = 'email';
+    }
   }
 
   function showError(msg) {
@@ -226,17 +237,28 @@
 
   async function handleLogin() {
     clearAlerts();
-    const email = document.getElementById('emailInput').value.trim();
+    let input = document.getElementById('emailInput').value.trim();
     const password = document.getElementById('passwordInput').value;
-    if (!email || !password) { showError('Please enter your email and password.'); return; }
+    if (!input || !password) { showError('Please enter your credentials and password.'); return; }
+
+    // If student tab and input looks like a roll number (all digits), convert to institutional email
+    let email = input;
+    if (currentRole === 'student' && /^\d+$/.test(input)) {
+      email = input + '@thinkark.student';
+    }
 
     setLoading(true);
     const { data, error } = await sb.auth.signInWithPassword({ email, password });
     setLoading(false);
 
     if (error) {
-      if (error.message.includes('Invalid login')) showError('Incorrect email or password. Please try again.');
-      else showError(error.message);
+      if (error.message.includes('Invalid login')) {
+        showError(currentRole === 'student'
+          ? 'Incorrect Roll Number or password. Please try again.'
+          : 'Incorrect email or password. Please try again.');
+      } else {
+        showError(error.message);
+      }
       return;
     }
 

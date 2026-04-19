@@ -287,13 +287,16 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
 <div class="modal-overlay" id="modal-add-student">
   <div class="modal">
     <div class="modal-title">Add New Student <button class="modal-close" onclick="closeModal('modal-add-student')">✕</button></div>
-    <div class="form-row fr2">
-      <div class="fgroup"><label>Full Name</label><input id="s-name" type="text" placeholder="Student's full name"></div>
-      <div class="fgroup"><label>Email</label><input id="s-email" type="email" placeholder="student@email.com"></div>
+    <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:var(--navy)">
+      &#9432; Roll number will be auto-generated (e.g. <strong>202607001</strong>) and shown after account creation. Student logs in with Roll Number + Password.
     </div>
     <div class="form-row fr2">
-      <div class="fgroup"><label>Password</label><input id="s-pw" type="password" placeholder="Temporary password"></div>
-      <div class="fgroup"><label>Phone</label><input id="s-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+      <div class="fgroup"><label>Full Name</label><input id="s-name" type="text" placeholder="Student's full name"></div>
+      <div class="fgroup"><label>Phone (optional)</label><input id="s-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+    </div>
+    <div class="form-row fr2">
+      <div class="fgroup"><label>Temporary Password</label><input id="s-pw" type="password" placeholder="Min 6 characters"></div>
+      <div class="fgroup"><label>&nbsp;</label><div style="font-size:0.75rem;color:var(--muted);padding-top:8px">Share this with the student along with their roll number</div></div>
     </div>
     <div class="form-row fr3">
       <div class="fgroup"><label>Class</label><select id="s-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10" selected>Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option></select></div>
@@ -700,7 +703,6 @@ async function deleteStudent(id) {
 }
 async function addStudent() {
   const name = document.getElementById('s-name').value.trim();
-  const email = document.getElementById('s-email').value.trim();
   const pw = document.getElementById('s-pw').value;
   const phone = document.getElementById('s-phone').value.trim();
   const cls = document.getElementById('s-class').value;
@@ -709,49 +711,52 @@ async function addStudent() {
   const pname = document.getElementById('s-pname').value.trim();
   const pphone = document.getElementById('s-pphone').value.trim();
 
-  if (!name || !email || !pw) { alert('Name, email and password are required.'); return; }
+  if (!name || !pw || !cls) { alert('Name, class and password are required.'); return; }
   if (pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
 
   const btn = document.querySelector('#modal-add-student .btn-primary');
   btn.disabled = true; btn.textContent = 'Creating...';
 
   try {
-    // Step 1: Create auth user via Supabase Admin API
-    // We use signUp which works with anon key - then we set the role
-    const { data: authData, error: authError } = await sb.auth.admin ?
-      sb.auth.admin.createUser({ email, password: pw, email_confirm: true }) :
-      { data: null, error: { message: 'Admin API not available' } };
+    // Generate roll number: YYYY + class(2 digits) + serial(3 digits)
+    const year = new Date().getFullYear();
+    const clsPadded = cls.padStart(2, '0');
+    // Get count of existing students in this class to generate serial
+    const { count } = await sb.from('students').select('id', { count: 'exact', head: true })
+      .eq('current_class', parseInt(cls));
+    const serial = String((count || 0) + 1).padStart(3, '0');
+    const rollNumber = year + clsPadded + serial;
 
-    let userId;
+    // Generate institutional email from roll number
+    const genEmail = rollNumber + '@thinkark.student';
 
-    if (authError || !authData) {
-      // Fallback: use signUp (works but requires email confirmation disabled)
-      const { data: signUpData, error: signUpError } = await sb.auth.signUp({
-        email, password: pw,
-        options: { data: { full_name: name, role: 'student' } }
-      });
-      if (signUpError) throw new Error(signUpError.message);
-      userId = signUpData.user?.id;
-      if (!userId) throw new Error('Could not create user account. Check if email already exists.');
-    } else {
-      userId = authData.user?.id;
-    }
+    // Create auth user with generated email
+    const { data: signUpData, error: signUpError } = await sb.auth.signUp({
+      email: genEmail,
+      password: pw,
+      options: { data: { full_name: name, role: 'student' } }
+    });
+    if (signUpError) throw new Error(signUpError.message);
+    const userId = signUpData.user?.id;
+    if (!userId) throw new Error('Could not create auth account.');
 
-    // Step 2: Insert into users table
+    // Insert into users table
     const { error: userError } = await sb.from('users').insert({
-      id: userId, email, full_name: name,
+      id: userId, email: genEmail, full_name: name,
       phone: phone || null, role: 'student'
     });
-    if (userError && !userError.message.includes('duplicate')) throw new Error('Users table: ' + userError.message);
+    if (userError && !userError.message.includes('duplicate'))
+      throw new Error('Users table: ' + userError.message);
 
-    // Step 3: Find the program for this class
-    const { data: programs } = await sb.from('programs').select('id, name')
+    // Find class program
+    const { data: programs } = await sb.from('programs').select('id')
       .eq('class_level', parseInt(cls)).limit(1);
     const programId = programs && programs.length ? programs[0].id : null;
 
-    // Step 4: Insert into students table
+    // Insert into students table
     const { data: studentRow, error: stuError } = await sb.from('students').insert({
       user_id: userId,
+      roll_number: rollNumber,
       primary_board: board,
       current_class: parseInt(cls),
       parent_name: pname || null,
@@ -759,33 +764,37 @@ async function addStudent() {
     }).select().single();
     if (stuError) throw new Error('Student record: ' + stuError.message);
 
-    // Step 5: Enroll in class program
+    // Enroll in class program
     if (programId && studentRow) {
       await sb.from('enrollments').insert({
         student_id: studentRow.id, program_id: programId
       });
     }
 
-    // Step 6: Enroll in competitive program if selected
+    // Enroll in competitive program if selected
     if (comp && studentRow) {
-      const { data: compProg } = await sb.from('programs').select('id').eq('name', comp).limit(1);
+      const { data: compProg } = await sb.from('programs').select('id')
+        .eq('name', comp).limit(1);
       if (compProg && compProg.length) {
         await sb.from('enrollments').insert({
           student_id: studentRow.id, program_id: compProg[0].id
-        }).onConflict('student_id,program_id').ignore();
+        });
       }
     }
 
-    toast('Student account created successfully!');
+    // Show roll number to admin
+    toast('Student created! Roll No: ' + rollNumber);
+    alert('Student account created successfully!\n\nRoll Number: ' + rollNumber + '\nPassword: ' + pw + '\n\nShare these credentials with the student. They will use their Roll Number to log in.');
+
     // Reset form
-    ['s-name','s-email','s-pw','s-phone','s-pname','s-pphone'].forEach(function(id) {
+    ['s-name','s-pw','s-phone','s-pname','s-pphone'].forEach(function(id) {
       const el = document.getElementById(id); if (el) el.value = '';
     });
     closeModal('modal-add-student');
     await loadStudents(); renderStudents();
 
   } catch(err) {
-    alert('Error creating student: ' + err.message);
+    alert('Error: ' + err.message);
   } finally {
     btn.disabled = false; btn.textContent = 'Create Account';
   }
