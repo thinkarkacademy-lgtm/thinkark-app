@@ -5,8 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ThinkArk Academy — Student Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-function openModal(id) { document.getElementById(id).classList.add('open'); }
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://gaizlwyhthiqguqjfyuq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhaXpsd3lodGhpcWd1cWpmeXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY3OTEsImV4cCI6MjA4ODczMjc5MX0.VTN6TwKFLzmfpnOFOPH5XXnbwLQ3No45sitcRA-Cakk';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null, studentData = null;
+let allContent = [], allNotifications = [], allResults = [], allAttendance = [], allDoubts = [], allExams = [];
+let currentSubjectFilter = null, notifFilter = 'all';
+
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login-connected.html'; return; }
+  currentUser = session.user;
+  await loadStudentData();
+  renderSidebarUser();
+  renderDashboard();
+  await Promise.all([loadContent(), loadNotifications(), loadResults(), loadAttendance(), loadDoubts()]);
+  renderDashboard();
+  renderNotes();
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }(id) { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 </script>
 <style>
