@@ -6,31 +6,6 @@
 <title>ThinkArk Academy — Student Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-const SUPABASE_URL = 'https://gaizlwyhthiqguqjfyuq.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhaXpsd3lodGhpcWd1cWpmeXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY3OTEsImV4cCI6MjA4ODczMjc5MX0.VTN6TwKFLzmfpnOFOPH5XXnbwLQ3No45sitcRA-Cakk';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let currentUser = null, studentData = null;
-let allContent = [], allNotifications = [], allResults = [], allAttendance = [], allDoubts = [], allExams = [];
-let currentSubjectFilter = null, notifFilter = 'all';
-
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'login-connected.html'; return; }
-  currentUser = session.user;
-  await loadStudentData();
-  renderSidebarUser();
-  renderDashboard();
-  await Promise.all([loadContent(), loadNotifications(), loadResults(), loadAttendance(), loadDoubts()]);
-  renderDashboard();
-  renderNotes();
-}
-
-function openModal(id) { document.getElementById(id).classList.add('open'); }(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-</script>
 <style>
   :root {
     --navy:#1a2e5a; --navy-deep:#0f1e3d; --navy-mid:#243872; --navy-light:#2d4a8a;
@@ -218,8 +193,9 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
   .sb-sst{background:#fef0ee;border-color:#e05252}
   .sb-subj{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;color:var(--navy);}
   .sb-detail{font-size:0.7rem;color:var(--muted);margin-top:3px;}
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:20px;}
-.open{display:flex;}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
 </style>
 </head>
 <body>
@@ -394,18 +370,46 @@ function closeModal(id) { document.getElementById(id).classList.remove('open'); 
 </div><!-- /main -->
 
 <script>
-function openFile(btn) {
-  const url = btn.getAttribute('data-url');
-  if (url) window.open(url, '_blank');
+  document.querySelectorAll('.nbv').forEach(function(b){ b.onclick = function(){ viewNote(decodeURIComponent(this.dataset.url), decodeURIComponent(this.dataset.title)); }; });
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function openFile(btn) { window.open(btn.dataset.url, '_blank'); }
+
+const SUPABASE_URL = 'https://gaizlwyhthiqguqjfyuq.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdhaXpsd3lodGhpcWd1cWpmeXVxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTY3OTEsImV4cCI6MjA4ODczMjc5MX0.VTN6TwKFLzmfpnOFOPH5XXnbwLQ3No45sitcRA-Cakk';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── State ──
+let currentUser = null;
+let studentData = null;
+let allContent = [];
+let allNotifications = [];
+let allResults = [];
+let allAttendance = [];
+let allDoubts = [];
+
+// ── Page titles ──
+const pageTitles = { dashboard:'Dashboard', notes:'My Notes', videos:'Videos', notifications:'Notifications', schedule:'Schedule', exams:'Exams', attendance:'Attendance', performance:'Performance', doubts:'Doubts', profile:'My Profile' };
+
+// ── Auth guard ──
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location.href = 'login-connected.html'; return; }
+  currentUser = session.user;
+  await loadStudentData();
+  await Promise.all([loadContent(), loadNotifications(), loadResults(), loadAttendance(), loadDoubts()]);
+  renderDashboard();
+  renderProfile();
 }
 
 function viewNote(url, title) {
-  document.getElementById('viewer-title').textContent = title || 'Document';
-  const frame = document.getElementById('viewer-frame');
-  // Use Google Docs viewer for PDFs so they render inline
-  const isPdf = url.toLowerCase().includes('.pdf') || url.includes('supabase');
-  frame.src = isPdf ? 'https://docs.google.com/viewer?url=' + encodeURIComponent(url) + '&embedded=true' : url;
-  document.getElementById('viewer-download').href = url;
+  var t = document.getElementById('viewer-title');
+  var f = document.getElementById('viewer-frame');
+  var d = document.getElementById('viewer-download');
+  if (t) t.textContent = title || 'Document';
+  if (f) f.src = 'https://docs.google.com/viewer?url=' + encodeURIComponent(url) + '&embedded=true';
+  if (d) d.href = url;
   openModal('modal-viewer');
 }
 
@@ -415,6 +419,19 @@ async function handleLogout() {
 }
 
 // ── Load data ──
+async function markNotificationsRead() {
+  if (!currentUser || !allNotifications.length) return;
+  var unread = allNotifications.filter(function(n){ return !n.notification_reads || !n.notification_reads.length; });
+  if (!unread.length) return;
+  var rows = unread.map(function(n){ return { notification_id: n.id, user_id: currentUser.id }; });
+  await sb.from('notification_reads').upsert(rows, { onConflict: 'notification_id,user_id', ignoreDuplicates: true });
+  var badge = document.getElementById('nb-notif');
+  if (badge) badge.textContent = '';
+  var dot = document.getElementById('notif-dot');
+  if (dot) dot.style.display = 'none';
+  allNotifications.forEach(function(n){ n.notification_reads = [{read_at: new Date().toISOString()}]; });
+}
+
 async function loadStudentData() {
   const { data: user } = await sb.from('users').select('*').eq('id', currentUser.id).single();
   const { data: student } = await sb.from('students').select('*, enrollments(*, programs(*))').eq('user_id', currentUser.id).single();
@@ -550,14 +567,10 @@ function renderNotes() {
   }
   grid.innerHTML = filtered.map(function(n) {
     const isNew = (Date.now() - new Date(n.created_at)) < 86400000 * 2;
-    const safeUrl = (n.file_url || '').replace(/"/g, '%22');
-    const safeTitle = (n.title || '').replace(/"/g, '&quot;');
     const fileBtn = n.file_url
-      ? '<div style="display:flex;gap:6px">' +
-        '<button class="dl-btn view-btn" data-url="' + safeUrl + '" data-title="' + safeTitle + '" style="background:var(--navy);color:white">&#128196; View</button>' +
-        '<a href="' + safeUrl + '" download target="_blank" class="dl-btn" style="text-decoration:none;color:var(--navy);background:var(--cream-mid)">&#8595; Download</a>' +
-        '</div>'
+      ? '<div style="display:flex;gap:6px"><button class="dl-btn nbv" data-url="' + encodeURIComponent(n.file_url) + '" data-title="' + encodeURIComponent(n.title||'') + '" style="background:var(--navy);color:white">View</button><a href="' + n.file_url + '" download target="_blank" class="dl-btn" style="text-decoration:none;color:var(--navy);background:var(--cream-mid)">Download</a></div>'
       : '<span style="color:var(--muted);font-size:0.7rem">No file</span>';
+
     return '<div class="note-card">' +
       (isNew ? '<div class="nc-badge">NEW</div>' : '') +
       '<div class="nc-subj" style="color:var(--gold)">' + (n.subjects?.name || 'General') + '</div>' +
@@ -566,9 +579,6 @@ function renderNotes() {
       '<div class="nc-footer"><span>' + timeAgo(n.created_at) + '</span>' + fileBtn + '</div>' +
       '</div>';
   }).join('');
-  document.querySelectorAll('.view-btn').forEach(function(btn) {
-    btn.onclick = function() { viewNote(this.dataset.url, this.dataset.title); };
-  });
 }
 
 function filterNotes(subject, clickedChip) {
@@ -615,6 +625,7 @@ function renderVideos() {
 
 // ── Render notifications ──
 let notifFilter = 'all';
+let allExams = [];
 function renderNotifications() {
   const filtered = notifFilter==='unread' ? allNotifications.filter(n=>!n.notification_reads?.length) : allNotifications;
   document.getElementById('notif-sub').textContent = `${allNotifications.filter(n=>!n.notification_reads?.length).length} unread · ${allNotifications.length} total`;
@@ -697,6 +708,7 @@ function renderPerformance() {
 // ── Render exams ──
 async function renderExams() {
   const { data: exams } = await sb.from('exams').select('*, subjects(name)').eq('is_published', true).order('scheduled_date', { ascending: true });
+  allExams = exams || [];
   if (!exams || exams.length === 0) { document.getElementById('exams-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="ei">📝</div><div class="et">No exams scheduled</div><div class="es">Your teachers haven\'t scheduled any exams yet.</div></div>'; return; }
   const resultMap = {};
   allResults.forEach(r => resultMap[r.exams?.id || r.exam_id] = r);
@@ -712,7 +724,21 @@ async function renderExams() {
 }
 
 async function startExam(examId) {
-  window.location.href = `exam-take.html?exam_id=${examId}`;
+  var exam = allExams.find(function(e){ return e.id === examId; });
+  if (!exam) { alert('Exam not found. Please refresh.'); return; }
+  var now = new Date();
+  if (exam.start_time && now < new Date(exam.start_time)) {
+    var opts = {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:true};
+    alert('This exam opens on ' + new Date(exam.start_time).toLocaleString('en-IN', opts));
+    return;
+  }
+  if (exam.end_time && now > new Date(exam.end_time)) {
+    alert('This exam has ended.'); return;
+  }
+  var examType = exam.exam_type || exam.type || 'mcq';
+  window.location.href = examType === 'subjective'
+    ? 'exam-subjective.html?exam_id=' + examId
+    : 'exam-take.html?exam_id=' + examId;
 }
 
 // ── Render doubts ──
@@ -789,7 +815,7 @@ function showPage(id, navEl) {
   // Lazy render on first visit
   if (id==='notes') renderNotes();
   if (id==='videos') renderVideos();
-  if (id==='notifications') renderNotifications();
+  if (id==='notifications') { renderNotifications(); markNotificationsRead(); }
   if (id==='attendance') renderAttendance();
   if (id==='performance') renderPerformance();
   if (id==='exams') renderExams();
@@ -799,19 +825,5 @@ function showPage(id, navEl) {
 // ── Start ──
 init();
 </script>
-
-<!-- PDF Viewer Modal -->
-<div class="overlay" id="modal-viewer" style="z-index:300">
-  <div style="background:white;border-radius:16px;width:95%;max-width:900px;height:90vh;display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;color:var(--navy)" id="viewer-title">Document</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <a id="viewer-download" href="#" download target="_blank" style="padding:6px 14px;background:var(--cream-mid);color:var(--navy);border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none">&#8595; Download</a>
-        <button onclick="closeModal('modal-viewer');document.getElementById('viewer-frame').src=''" style="width:30px;height:30px;border-radius:50%;border:none;background:var(--cream-mid);cursor:pointer;font-size:0.9rem">&#10005;</button>
-      </div>
-    </div>
-    <iframe id="viewer-frame" src="" style="flex:1;width:100%;border:none" allowfullscreen></iframe>
-  </div>
-</div>
 </body>
 </html>
