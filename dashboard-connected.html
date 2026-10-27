@@ -193,107 +193,9 @@
   .sb-sst{background:#fef0ee;border-color:#e05252}
   .sb-subj{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;color:var(--navy);}
   .sb-detail{font-size:0.7rem;color:var(--muted);margin-top:3px;}
-
-.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:20px;}
-.overlay.open{display:flex;}
-
-  /* ══════════════════════════════════════
-     MOBILE — hamburger + drawer sidebar
-     ══════════════════════════════════════ */
-
-  /* Overlay behind open drawer */
-  .sidebar-backdrop {
-    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45);
-    z-index:99; backdrop-filter:blur(1px);
-  }
-  .sidebar-backdrop.open { display:block; }
-
-  /* Hamburger button in topbar (hidden on desktop) */
-  .hamburger {
-    display:none; width:36px; height:36px; align-items:center; justify-content:center;
-    border:none; background:none; cursor:pointer; flex-direction:column; gap:5px; padding:6px;
-  }
-  .hamburger span {
-    display:block; width:20px; height:2px; background:var(--navy);
-    border-radius:2px; transition:all 0.25s;
-  }
-
-  @media (max-width: 768px) {
-    /* ── Variables ── */
-    :root { --sidebar-w: 260px; }
-
-    /* ── Sidebar becomes a slide-in drawer ── */
-    .sidebar {
-      transform: translateX(-100%);
-      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
-      z-index: 300;
-      width: var(--sidebar-w);
-    }
-    .sidebar.open { transform: translateX(0); }
-
-    /* ── Topbar spans full width ── */
-    .topbar { left: 0; padding: 0 16px; }
-
-    /* ── Hamburger visible ── */
-    .hamburger { display: flex; }
-
-    /* ── Main takes full width ── */
-    .main { margin-left: 0; padding-top: 60px; }
-    .page { padding: 16px; }
-
-    /* ── Stat cards: 2 per row ── */
-    .stats-row { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-
-    /* ── 2-col and 6040 layouts: stack ── */
-    .two-col,
-    .col6040 { grid-template-columns: 1fr; gap: 12px; }
-
-    /* ── Notes grid: 1 col ── */
-    .notes-grid { grid-template-columns: 1fr; }
-
-    /* ── Exam grid: 1 col ── */
-    .exam-grid { grid-template-columns: 1fr; }
-
-    /* ── Attendance grid: 2 col ── */
-    .att-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-
-    /* ── Schedule grid: 2 col ── */
-    .sched-grid { grid-template-columns: repeat(2, 1fr); }
-
-    /* ── Performance hero: stack ── */
-    .perf-hero {
-      flex-direction: column; align-items: flex-start;
-      gap: 16px; padding: 20px;
-    }
-    .perf-div { display: none; }
-    .perf-stats { gap: 20px; flex-wrap: wrap; }
-
-    /* ── Tables: allow horizontal scroll ── */
-    .card { overflow-x: auto; }
-    .rtbl { min-width: 360px; }
-
-    /* ── Page header: stack ── */
-    .ph { flex-direction: column; align-items: flex-start; gap: 10px; }
-
-    /* ── Chip bar: wrap ── */
-    .chip-bar { flex-wrap: wrap; }
-
-    /* ── Profile hero ── */
-    #profile-hero > div { flex-direction: column; gap: 14px; }
-  }
-
-  @media (max-width: 420px) {
-    .stats-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-    .sc-val { font-size: 1.5rem; }
-    .pt { font-size: 1.4rem; }
-    .att-grid { grid-template-columns: 1fr 1fr; }
-  }
 </style>
 </head>
 <body>
-
-<!-- Mobile backdrop -->
-<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="closeSidebar()"></div>
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -330,8 +232,7 @@
   </div>
   <div class="nav-grp">
     <div class="nav-lbl">Account</div>
-    <div class="nav-item" onclick="showPage('profile',this)"><span class="ni">&#x1F464;</span> My Profile</div>
-    <div class="nav-item" onclick="showPage('settings',this)"><span class="ni">&#x2699;&#xFE0F;</span> Settings</div>
+    <div class="nav-item" onclick="showPage('profile',this)"><span class="ni">👤</span> My Profile</div>
   </div>
 
   <div class="sb-foot">
@@ -345,9 +246,6 @@
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <button class="hamburger" id="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
-    <span></span><span></span><span></span>
-  </button>
   <div class="tb-title" id="tbTitle">Dashboard</div>
   <div class="tb-right">
     <div class="notif-btn" onclick="showPage('notifications',null)">🔔<div class="notif-dot" id="notif-dot"></div></div>
@@ -379,22 +277,7 @@
 <!-- NOTES -->
 <div class="page" id="page-notes">
   <div class="ph"><div><div class="pt">My Notes</div><div class="ps" id="notes-sub">Loading…</div></div></div>
-  <!-- Category chips -->
-  <div class="chip-bar" id="category-chips" style="margin-bottom:8px;">
-    <div class="chip active" onclick="filterNotesByCategory(null,this)">All Types</div>
-    <div class="chip" onclick="filterNotesByCategory('chapter_notes',this)">Chapter Notes</div>
-    <div class="chip" onclick="filterNotesByCategory('question_bank',this)">Question Bank</div>
-    <div class="chip" onclick="filterNotesByCategory('worksheet',this)">Worksheets</div>
-    <div class="chip" onclick="filterNotesByCategory('homework',this)">Homework</div>
-  </div>
-  <!-- Subject + search filter row -->
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-    <select id="subject-select" onchange="filterNotesBySubjectDropdown(this.value)" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:20px;font-family:Barlow,sans-serif;font-size:0.82rem;color:var(--navy);background:white;outline:none;cursor:pointer;min-width:160px;">
-      <option value="">All Subjects</option>
-    </select>
-    <input id="notes-search" type="text" placeholder="Search notes..." oninput="applyNotesFilters()" style="padding:8px 14px;border:1.5px solid var(--border);border-radius:20px;font-family:Barlow,sans-serif;font-size:0.82rem;color:var(--navy);outline:none;flex:1;min-width:160px;">
-  </div>
-  <div class="chip-bar" id="subject-chips" style="display:none;"></div>
+  <div class="chip-bar" id="subject-chips"><div class="chip active" onclick="filterNotes(null,this)">All Subjects</div></div>
   <div class="notes-grid" id="notes-grid"><div class="skeleton" style="height:180px;border-radius:12px;"></div><div class="skeleton" style="height:180px;border-radius:12px;"></div><div class="skeleton" style="height:180px;border-radius:12px;"></div></div>
 </div>
 
@@ -417,15 +300,7 @@
 <!-- SCHEDULE -->
 <div class="page" id="page-schedule">
   <div class="ph"><div><div class="pt">Schedule</div><div class="ps" id="sched-sub">Your weekly timetable</div></div></div>
-  <!-- Day tabs -->
-  <div class="tab-strip" id="sched-day-tabs" style="margin-bottom:18px;width:100%;overflow-x:auto;"></div>
-  <!-- Timetable for selected day -->
-  <div id="sched-day-view"></div>
-  <!-- Full week view -->
-  <div class="card" style="margin-top:18px;">
-    <div class="card-title">Full Week</div>
-    <div id="sched-week-view"><div class="skeleton" style="height:200px;border-radius:8px;"></div></div>
-  </div>
+  <div class="card"><div id="sched-full"><div class="skeleton" style="height:280px;border-radius:8px;"></div></div></div>
 </div>
 
 <!-- EXAMS -->
@@ -436,7 +311,7 @@
 
 <!-- ATTENDANCE -->
 <div class="page" id="page-attendance">
-  <div class="ph"><div><div class="pt">My Attendance</div><div class="ps" id="att-sub">Class 1 &amp; Class 2 attendance</div></div></div>
+  <div class="ph"><div><div class="pt">My Attendance</div><div class="ps" id="att-sub">Subject-wise breakdown</div></div></div>
   <div class="att-grid" id="att-cards"><div class="skeleton" style="height:110px;border-radius:12px;"></div><div class="skeleton" style="height:110px;border-radius:12px;"></div><div class="skeleton" style="height:110px;border-radius:12px;"></div><div class="skeleton" style="height:110px;border-radius:12px;"></div></div>
   <div class="card"><div class="card-title">Recent Attendance Log</div><div id="att-log"><div class="skeleton" style="height:200px;border-radius:8px;"></div></div></div>
 </div>
@@ -451,7 +326,7 @@
   </div>
   <div class="two-col">
     <div class="card"><div class="card-title">Subject-wise Scores</div><div id="subj-bars"><div class="skeleton" style="height:120px;border-radius:6px;"></div></div></div>
-    <div class="card"><div class="card-title">Recent Results</div><table class="rtbl"><thead><tr><th>Exam</th><th>Score</th><th>Grade</th></tr></thead><tbody id="results-tbody"><tr><td colspan="3"><div class="skeleton" style="height:80px;border-radius:6px;"></div></td></tr></tbody></table></div>
+    <div class="card"><div class="card-title">Recent Results</div><table class="rtbl"><thead><tr><th>Exam</th><th>Score</th><th>%</th></tr></thead><tbody id="results-tbody"><tr><td colspan="3"><div class="skeleton" style="height:80px;border-radius:6px;"></div></td></tr></tbody></table></div>
   </div>
 </div>
 
@@ -461,35 +336,9 @@
   <div class="card" style="margin-bottom:16px;">
     <div class="card-title">Post a Doubt</div>
     <div style="display:flex;flex-direction:column;gap:10px;">
-      <select id="doubt-subject" onchange="onDoubtSubjectChange()" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);background:white;outline:none;">
-        <option value="">Select Subject *</option>
-        <option>Mathematics</option><option>Physics</option><option>Chemistry</option><option>Biology</option>
-        <option>Science</option><option>English</option><option>Hindi</option><option>Social Studies</option>
-        <option>History</option><option>Geography</option><option>Sanskrit</option>
-        <option>Computer Science</option><option>Artificial Intelligence</option>
-        <option>Economics</option><option>Accountancy</option><option>Business Studies</option>
-        <option>Commerce</option><option>Political Science</option><option>Sociology</option><option>Psychology</option>
-        <option>Physical Education</option><option>Other</option>
-      </select>
-      <div id="doubt-teacher-wrap" style="display:none;">
-        <select id="doubt-teacher" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);background:white;outline:none;width:100%;">
-          <option value="">Select Teacher *</option>
-        </select>
-        <div id="doubt-teacher-hint" style="font-size:0.72rem;color:var(--muted);margin-top:4px;display:none;">No teachers found for this subject. Please select a different subject.</div>
-      </div>
-      <textarea id="doubt-text" placeholder="Describe your doubt in detail…" style="padding:12px;border:1.5px solid var(--border);border-radius:8px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);resize:vertical;min-height:80px;outline:none;"></textarea>
-      <!-- Image upload -->
-      <div id="doubt-img-preview" style="display:none;position:relative;width:fit-content;">
-        <img id="doubt-img-thumb" style="max-height:120px;max-width:100%;border-radius:8px;border:1.5px solid var(--border);" />
-        <button onclick="clearDoubtImage()" style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:white;border:none;font-size:0.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;">✕</button>
-      </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-        <label for="doubt-img-input" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--cream-mid);border:1.5px solid var(--border);border-radius:8px;font-size:0.8rem;font-weight:600;color:var(--navy);cursor:pointer;">
-          📷 Attach Image
-          <input type="file" id="doubt-img-input" accept="image/*" capture="environment" style="display:none;" onchange="handleDoubtImage(this)">
-        </label>
-        <button onclick="postDoubt()" style="padding:9px 24px;background:var(--navy);color:var(--cream);border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;" id="doubt-submit-btn">Post Doubt</button>
-      </div>
+      <select id="doubt-subject" style="padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow',sans-serif;font-size:0.875rem;color:var(--navy);background:white;outline:none;"><option value="">Select Subject</option><option>Mathematics</option><option>Science</option><option>English</option><option>Hindi</option><option>Social Studies</option></select>
+      <textarea id="doubt-text" placeholder="Describe your doubt in detail…" style="padding:12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow',sans-serif;font-size:0.875rem;color:var(--navy);resize:vertical;min-height:80px;outline:none;"></textarea>
+      <button onclick="postDoubt()" style="align-self:flex-end;padding:9px 24px;background:var(--navy);color:var(--cream);border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">Post Doubt</button>
     </div>
   </div>
   <div class="card"><div class="card-title">My Doubts</div><div id="doubts-list"><div class="skeleton" style="height:100px;border-radius:8px;"></div></div></div>
@@ -510,85 +359,14 @@
     </div>
   </div>
   <div class="two-col">
-    <div class="card">
-      <div class="card-title">Account Details
-        <button id="prof-edit-btn" onclick="toggleProfileEdit()" style="padding:5px 14px;background:rgba(26,46,90,0.08);color:var(--navy);border:1.5px solid var(--border);border-radius:7px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">✏️ Edit</button>
-      </div>
-      <!-- Read view -->
-      <div id="prof-details-list" style="display:flex;flex-direction:column;gap:0;"><div class="skeleton" style="height:120px;border-radius:8px;"></div></div>
-      <!-- Edit form (hidden by default) -->
-      <div id="prof-edit-form" style="display:none;flex-direction:column;gap:12px;">
-        <div>
-          <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);display:block;margin-bottom:5px;">Full Name</label>
-          <input id="edit-fullname" type="text" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow',sans-serif;font-size:0.875rem;color:var(--navy);outline:none;" placeholder="Your full name">
-        </div>
-        <div>
-          <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);display:block;margin-bottom:5px;">Parent / Guardian Name</label>
-          <input id="edit-parentname" type="text" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow',sans-serif;font-size:0.875rem;color:var(--navy);outline:none;" placeholder="Parent name">
-        </div>
-        <div>
-          <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);display:block;margin-bottom:5px;">Parent Phone</label>
-          <input id="edit-parentphone" type="tel" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow',sans-serif;font-size:0.875rem;color:var(--navy);outline:none;" placeholder="10-digit number">
-        </div>
-        <div style="font-size:0.75rem;color:var(--muted);padding:8px 10px;background:var(--cream-mid);border-radius:7px;">
-          📌 Board, class and email can only be changed by ThinkArk admin.
-        </div>
-        <div style="display:flex;gap:8px;">
-          <button onclick="saveProfile()" style="flex:1;padding:10px;background:var(--navy);color:var(--cream);border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;" id="prof-save-btn">Save Changes</button>
-          <button onclick="toggleProfileEdit()" style="padding:10px 16px;background:white;color:var(--navy);border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-size:0.9rem;font-weight:700;cursor:pointer;">Cancel</button>
-        </div>
-      </div>
-    </div>
+    <div class="card"><div class="card-title">Account Details</div><div id="prof-details-list" style="display:flex;flex-direction:column;gap:0;"><div class="skeleton" style="height:120px;border-radius:8px;"></div></div></div>
     <div class="card"><div class="card-title">Enrolled Programs</div><div id="prof-programs"><div class="skeleton" style="height:80px;border-radius:10px;"></div></div></div>
-  </div>
-</div>
-
-<!-- SETTINGS -->
-<div class="page" id="page-settings">
-  <div class="ph"><div><div class="pt">Settings</div><div class="ps">Manage your account</div></div></div>
-  <div class="card" style="max-width:480px;">
-    <div class="card-title">Change Password</div>
-    <div id="pw-alert" style="display:none;padding:10px 14px;border-radius:8px;font-size:0.82rem;margin-bottom:14px;"></div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <div>
-        <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);display:block;margin-bottom:5px;">Current Password</label>
-        <input id="pw-current" type="password" placeholder="Enter current password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;">
-      </div>
-      <div>
-        <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);display:block;margin-bottom:5px;">New Password</label>
-        <input id="pw-new" type="password" placeholder="Min 6 characters" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;">
-      </div>
-      <div>
-        <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);display:block;margin-bottom:5px;">Confirm New Password</label>
-        <input id="pw-confirm" type="password" placeholder="Repeat new password" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;">
-      </div>
-      <button onclick="changePassword()" id="pw-save-btn" style="padding:11px;background:var(--navy);color:var(--cream);border:none;border-radius:8px;font-family:Barlow Condensed,sans-serif;font-size:0.95rem;font-weight:700;cursor:pointer;letter-spacing:1px;">Update Password</button>
-    </div>
-  </div>
-  <div class="card" style="max-width:480px;margin-top:18px;">
-    <div class="card-title">Account Info</div>
-    <div style="display:flex;flex-direction:column;gap:0;font-size:0.85rem;">
-      <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
-        <span style="color:var(--muted);font-weight:500;">Login Email</span>
-        <span id="settings-email" style="font-weight:700;color:var(--navy);">—</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:10px 0;">
-        <span style="color:var(--muted);font-weight:500;">Account Type</span>
-        <span style="font-weight:700;color:var(--navy);">Student</span>
-      </div>
-    </div>
-    <div style="margin-top:14px;font-size:0.75rem;color:var(--muted);padding:10px;background:var(--cream-mid);border-radius:8px;">
-      To change your login email, contact ThinkArk Academy admin.
-    </div>
   </div>
 </div>
 
 </div><!-- /main -->
 
 <script>
-  document.querySelectorAll('.nbv').forEach(function(b){ b.onclick = function(){ viewNote(decodeURIComponent(this.dataset.url), decodeURIComponent(this.dataset.title)); }; });
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function openFile(btn) { window.open(btn.dataset.url, '_blank'); }
 
 const SUPABASE_URL = 'https://gaizlwyhthiqguqjfyuq.supabase.co';
@@ -604,11 +382,6 @@ let allNotifications = [];
 let allResults = [];
 let allAttendance = [];
 let allDoubts = [];
-let allTimetable = [];
-let doubtImageFile = null;
-let allTeachersData = [];
-let notesSubjectFilter = null;
-let notesCategoryFilter = null;
 
 // ── Page titles ──
 const pageTitles = { dashboard:'Dashboard', notes:'My Notes', videos:'Videos', notifications:'Notifications', schedule:'Schedule', exams:'Exams', attendance:'Attendance', performance:'Performance', doubts:'Doubts', profile:'My Profile' };
@@ -619,20 +392,9 @@ async function init() {
   if (!session) { window.location.href = 'login-connected.html'; return; }
   currentUser = session.user;
   await loadStudentData();
-  await Promise.all([loadContent(), loadNotifications(), loadResults(), loadAttendance(), loadDoubts(), loadTimetable(), loadTeachersData()]);
+  await Promise.all([loadContent(), loadNotifications(), loadResults(), loadAttendance(), loadDoubts()]);
   renderDashboard();
   renderProfile();
-  renderSettings();
-}
-
-function viewNote(url, title) {
-  var t = document.getElementById('viewer-title');
-  var f = document.getElementById('viewer-frame');
-  var d = document.getElementById('viewer-download');
-  if (t) t.textContent = title || 'Document';
-  if (f) f.src = 'https://docs.google.com/viewer?url=' + encodeURIComponent(url) + '&embedded=true';
-  if (d) d.href = url;
-  openModal('modal-viewer');
 }
 
 async function handleLogout() {
@@ -641,19 +403,6 @@ async function handleLogout() {
 }
 
 // ── Load data ──
-async function markNotificationsRead() {
-  if (!currentUser || !allNotifications.length) return;
-  var unread = allNotifications.filter(function(n){ return !n.notification_reads || !n.notification_reads.length; });
-  if (!unread.length) return;
-  var rows = unread.map(function(n){ return { notification_id: n.id, user_id: currentUser.id }; });
-  await sb.from('notification_reads').upsert(rows, { onConflict: 'notification_id,user_id', ignoreDuplicates: true });
-  var badge = document.getElementById('nb-notif');
-  if (badge) badge.textContent = '';
-  var dot = document.getElementById('notif-dot');
-  if (dot) dot.style.display = 'none';
-  allNotifications.forEach(function(n){ n.notification_reads = [{read_at: new Date().toISOString()}]; });
-}
-
 async function loadStudentData() {
   const { data: user } = await sb.from('users').select('*').eq('id', currentUser.id).single();
   const { data: student } = await sb.from('students').select('*, enrollments(*, programs(*))').eq('user_id', currentUser.id).single();
@@ -664,35 +413,14 @@ async function loadStudentData() {
     email: user?.email,
     full_name: user?.full_name,
     primary_board: student?.primary_board || user?.primary_board,
-    current_class: student?.current_class || null,
     enrollments: student?.enrollments || []
   };
   renderSidebarUser();
 }
 
 async function loadContent() {
-  const cls = studentData?.current_class || studentData?.enrollments?.[0]?.programs?.class_level;
-  const board = studentData?.primary_board;
-  const clsNum = cls ? parseInt(cls) : null;
-  // Load all published content then filter client-side for reliability
-  let query = sb.from('content').select('*, subjects(name)').eq('is_published', true).order('created_at', { ascending: false });
-  const { data } = await query;
-  allContent = (data || []).filter(function(c) {
-    // Never show teacher material to students
-    if (c.category === 'teacher_material' || c.category === 'lecture_notes' || c.category === 'teacher_study_material') return false;
-    // Class check: show if no class set on content, or matches student's class
-    var classMatch = !c.class_level || !clsNum || parseInt(c.class_level) === clsNum;
-    if (!classMatch) return false;
-    // Board check: show if no board restriction, board is All, or matches student board
-    var boardMatch = !board || !c.board || c.board === 'All' || c.board === board;
-    return boardMatch;
-  });
-  // Update notes badge with count of notes added in last 7 days
-  const newNotes = allContent.filter(function(c) {
-    return c.type !== 'youtube_link' && (Date.now() - new Date(c.created_at)) < 7 * 86400000;
-  });
-  const notesBadge = document.getElementById('nb-notes');
-  if (notesBadge) notesBadge.textContent = newNotes.length || '';
+  const { data } = await sb.from('content').select('*, subjects(name)').eq('is_published', true).order('created_at', { ascending: false });
+  allContent = data || [];
 }
 
 async function loadNotifications() {
@@ -711,64 +439,15 @@ async function loadResults() {
 }
 
 async function loadAttendance() {
-  const { data: student } = await sb.from('students').select('id, current_class').eq('user_id', currentUser.id).single();
-  if (!student) { allAttendance = []; return; }
-  const { data } = await sb.from('attendance')
-    .select('date, slot, status')
-    .eq('student_id', student.id)
-    .order('date', { ascending: false });
+  if (!studentData) return;
+  const { data } = await sb.from('attendance').select('*, subjects(name)').eq('student_id', studentData.id).order('date', { ascending: false });
   allAttendance = data || [];
 }
 
 async function loadDoubts() {
   if (!studentData) return;
-  var res = await sb.from('doubts')
-    .select('*, teachers(id, full_name)')
-    .eq('student_id', studentData.id)
-    .order('created_at', { ascending: false });
-  allDoubts = res.data || [];
-}
-
-async function loadTeachersData() {
-  var res = await sb.from('teachers').select('id, full_name, subjects, class_levels').eq('is_active', true).order('full_name');
-  allTeachersData = res.data || [];
-}
-
-function onDoubtSubjectChange() {
-  var subject = document.getElementById('doubt-subject').value;
-  var wrap = document.getElementById('doubt-teacher-wrap');
-  var teacherSel = document.getElementById('doubt-teacher');
-  var hint = document.getElementById('doubt-teacher-hint');
-  if (!subject) { wrap.style.display = 'none'; return; }
-  var matching = allTeachersData.filter(function(t) {
-    return t.subjects && t.subjects.indexOf(subject) !== -1;
-  });
-  teacherSel.innerHTML = '<option value="">Select Teacher *</option>';
-  matching.forEach(function(t) {
-    var opt = document.createElement('option');
-    opt.value = t.id; opt.textContent = t.full_name;
-    teacherSel.appendChild(opt);
-  });
-  wrap.style.display = 'block';
-  if (!matching.length) {
-    hint.style.display = 'block';
-    teacherSel.style.display = 'none';
-  } else {
-    hint.style.display = 'none';
-    teacherSel.style.display = 'block';
-  }
-}
-
-async function deleteDoubt(id, attachmentUrl) {
-  if (!confirm('Delete this doubt? This cannot be undone.')) return;
-  // Delete from storage if image attached
-  if (attachmentUrl) {
-    var path = attachmentUrl.split('/notes/')[1];
-    if (path) await sb.storage.from('notes').remove([path]);
-  }
-  var res = await sb.from('doubts').delete().eq('id', id).eq('student_id', studentData.id);
-  if (res.error) { alert('Error: ' + res.error.message); return; }
-  await loadDoubts(); renderDoubts();
+  const { data } = await sb.from('doubts').select('*').eq('student_id', studentData.id).order('created_at', { ascending: false });
+  allDoubts = data || [];
 }
 
 // ── Render sidebar user ──
@@ -799,10 +478,8 @@ function renderDashboard() {
   document.getElementById('stat-notes-note').textContent = `${allContent.length} total items`;
 
   const attPct = calcOverallAttendance();
-  document.getElementById('stat-att').textContent = attPct || 'N/A';
-  const totalSlotsD = allAttendance.length;
-  const absentSlotsD = allAttendance.filter(function(a){ return a.status === 'absent'; }).length;
-  document.getElementById('stat-att-note').textContent = totalSlotsD ? (totalSlotsD - absentSlotsD) + ' / ' + totalSlotsD + ' classes' : 'No records yet';
+  document.getElementById('stat-att').textContent = attPct ? attPct + '%' : 'N/A';
+  document.getElementById('stat-att-note').textContent = allAttendance.length ? `${allAttendance.filter(a=>a.status==='present').length} / ${allAttendance.length} classes` : 'No records yet';
 
   const avgScore = calcAvgScore();
   document.getElementById('stat-score').textContent = avgScore ? avgScore + '%' : 'N/A';
@@ -823,35 +500,83 @@ function renderDashboard() {
   else { notifEl.innerHTML = recentNotifs.map(n => { const unread = !n.notification_reads?.length; return `<div class="notif-row ${unread?'unread':''}"><div class="nd" style="background:${unread?'var(--navy)':'var(--border)'}"></div><div><div class="notif-text-sm">${n.title}</div><div class="notif-time-sm">${timeAgo(n.created_at)}</div></div></div>`; }).join(''); }
 
   // Schedule placeholder
-  renderTodaySchedule();
+  document.getElementById('dash-schedule').innerHTML = `
+    <div class="sb-block sb-math"><div class="sb-subj">Mathematics</div><div class="sb-detail">8:00–9:00</div></div>
+    <div class="sb-block sb-sci"><div class="sb-subj">Science</div><div class="sb-detail">9:00–10:00</div></div>
+    <div class="sb-block sb-eng"><div class="sb-subj">English</div><div class="sb-detail">11:00–12:00</div></div>
+    <div class="sb-block sb-sst"><div class="sb-subj">Social Studies</div><div class="sb-detail">2:00–3:00</div></div>`;
 }
 
 // ── Render notes ──
+let currentSubjectFilter = null;
 function renderNotes() {
-  // Build subjects from DB subjects AND from common subject names found in titles
-  const dbSubjects = [...new Set(allContent.filter(c => c.subjects).map(c => c.subjects?.name).filter(Boolean))];
-  const ALL_KNOWN_SUBJECTS = ['Mathematics','Science','Physics','Chemistry','Biology','English','Hindi',
-    'Social Studies','History','History & Civics','Geography','Sanskrit','Computer Science',
-    'Artificial Intelligence','Economics','Accountancy','Business Studies','Commerce',
-    'Political Science','Sociology','Psychology','Physical Education','Environmental Science'];
-  // Detect subjects mentioned in titles
-  const titleSubjects = ALL_KNOWN_SUBJECTS.filter(function(s) {
-    return allContent.some(function(c) { return c.title && c.title.toLowerCase().includes(s.toLowerCase()); });
-  });
-  const subjects = [...new Set([...dbSubjects, ...titleSubjects])].sort();
-  // Populate subject dropdown
-  var subSel = document.getElementById('subject-select');
-  if (subSel) {
-    var curVal = subSel.value;
-    subSel.innerHTML = '<option value="">All Subjects</option>';
+  const filtered = currentSubjectFilter
+    ? allContent.filter(c => c.type === 'pdf' && c.subjects?.name === currentSubjectFilter)
+    : allContent.filter(c => c.type === 'pdf');
+  document.getElementById('notes-sub').textContent = filtered.length + ' notes available';
+  const subjects = [...new Set(allContent.filter(c => c.type === 'pdf').map(c => c.subjects?.name).filter(Boolean))];
+  const chipsEl = document.getElementById('subject-chips');
+  if (chipsEl.children.length <= 1) {
+    const allChip = document.createElement('div');
+    allChip.className = 'chip' + (!currentSubjectFilter ? ' active' : '');
+    allChip.textContent = 'All Subjects';
+    allChip.onclick = function() { filterNotes(null, this); };
+    chipsEl.innerHTML = '';
+    chipsEl.appendChild(allChip);
     subjects.forEach(function(s) {
-      var opt = document.createElement('option');
-      opt.value = s; opt.textContent = s;
-      subSel.appendChild(opt);
+      const chip = document.createElement('div');
+      chip.className = 'chip' + (currentSubjectFilter === s ? ' active' : '');
+      chip.textContent = s;
+      chip.onclick = function() { filterNotes(s, this); };
+      chipsEl.appendChild(chip);
     });
-    subSel.value = curVal || '';
   }
-  applyNotesFilters();
+  const grid = document.getElementById('notes-grid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="ei">\u{1F4C4}</div><div class="et">No notes yet</div></div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(function(n) {
+    const isNew = (Date.now() - new Date(n.created_at)) < 86400000 * 2;
+    const fileBtn = n.file_url
+      ? '<button class="dl-btn" onclick="openFile(this)" data-url="' + n.file_url + '">\u2193 PDF</button>'
+      : '<span style="color:var(--muted);font-size:0.7rem">No file</span>';
+    return '<div class="note-card">' +
+      (isNew ? '<div class="nc-badge">NEW</div>' : '') +
+      '<div class="nc-subj" style="color:var(--gold)">' + (n.subjects?.name || 'General') + '</div>' +
+      '<div class="nc-title">' + n.title + '</div>' +
+      '<div class="nc-preview">' + (n.description || 'Study material uploaded by your teacher.') + '</div>' +
+      '<div class="nc-footer"><span>' + timeAgo(n.created_at) + '</span>' + fileBtn + '</div>' +
+      '</div>';
+  }).join('');
+}
+
+function filterNotes(subject, clickedChip) {
+  currentSubjectFilter = subject;
+  document.querySelectorAll('#subject-chips .chip').forEach(c => c.classList.remove('active'));
+  if (clickedChip) clickedChip.classList.add('active');
+  const filtered = currentSubjectFilter
+    ? allContent.filter(c => c.type === 'pdf' && c.subjects?.name === currentSubjectFilter)
+    : allContent.filter(c => c.type === 'pdf');
+  document.getElementById('notes-sub').textContent = filtered.length + ' notes available';
+  const grid = document.getElementById('notes-grid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="ei">📄</div><div class="et">No notes for this subject</div></div>';
+    return;
+  }
+  grid.innerHTML = filtered.map(function(n) {
+    const isNew = (Date.now() - new Date(n.created_at)) < 86400000 * 2;
+    const fileBtn = n.file_url
+      ? '<button class="dl-btn" onclick="openFile(this)" data-url="' + n.file_url + '">↓ PDF</button>'
+      : '<span style="color:var(--muted);font-size:0.7rem">No file</span>';
+    return '<div class="note-card">' +
+      (isNew ? '<div class="nc-badge">NEW</div>' : '') +
+      '<div class="nc-subj" style="color:var(--gold)">' + (n.subjects?.name || 'General') + '</div>' +
+      '<div class="nc-title">' + n.title + '</div>' +
+      '<div class="nc-preview">' + (n.description || 'Study material uploaded by your teacher.') + '</div>' +
+      '<div class="nc-footer"><span>' + timeAgo(n.created_at) + '</span>' + fileBtn + '</div>' +
+      '</div>';
+  }).join('');
 }
 
 // ── Render videos ──
@@ -870,7 +595,6 @@ function renderVideos() {
 
 // ── Render notifications ──
 let notifFilter = 'all';
-let allExams = [];
 function renderNotifications() {
   const filtered = notifFilter==='unread' ? allNotifications.filter(n=>!n.notification_reads?.length) : allNotifications;
   document.getElementById('notif-sub').textContent = `${allNotifications.filter(n=>!n.notification_reads?.length).length} unread · ${allNotifications.length} total`;
@@ -894,49 +618,24 @@ async function markRead(notifId, el) {
 
 // ── Render attendance ──
 function renderAttendance() {
-  const wrap = document.getElementById('att-content');
-  if (!wrap) return;
-
-  // Update summary
-  const dates = {};
-  allAttendance.forEach(function(a) {
-    if (!dates[a.date]) dates[a.date] = {};
-    dates[a.date]['slot' + a.slot] = a.status;
-  });
-  const totalDays = Object.keys(dates).length;
-  const totalSlots = totalDays * 2;
-  const absentSlots = allAttendance.filter(function(a){ return a.status === 'absent'; }).length;
-  const attendedSlots = totalSlots - absentSlots;
-  const pct = totalSlots ? Math.round((attendedSlots / totalSlots) * 100) : 0;
-
-  const totalDisp = document.getElementById('att-total-display');
-  const pctDisp = document.getElementById('att-pct-display');
-  const bar = document.getElementById('att-progress-bar');
-  if (totalDisp) totalDisp.textContent = attendedSlots + '/' + totalSlots;
-  if (pctDisp) { pctDisp.textContent = pct + '%'; pctDisp.style.color = pct >= 75 ? 'var(--green)' : 'var(--red)'; }
-  if (bar) bar.style.width = pct + '%';
-
-  if (!allAttendance.length) {
-    wrap.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted)">No attendance records yet.</div>';
+  const subjects = [...new Set(allAttendance.map(a=>a.subjects?.name).filter(Boolean))];
+  document.getElementById('att-sub').textContent = `${new Date().toLocaleDateString('en-IN',{month:'long',year:'numeric'})} · Subject-wise breakdown`;
+  if (subjects.length === 0) {
+    document.getElementById('att-cards').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="ei">✅</div><div class="et">No attendance records yet</div></div>';
+    document.getElementById('att-log').innerHTML = '';
     return;
   }
-  const dateRows = {};
-  allAttendance.forEach(function(a) {
-    if (!dateRows[a.date]) dateRows[a.date] = { slot1: 'present', slot2: 'present' };
-    dateRows[a.date]['slot' + a.slot] = a.status;
-  });
-  const rows = Object.keys(dateRows).sort().reverse().slice(0, 30).map(function(date) {
-    const d = dateRows[date];
-    const s1 = d.slot1 === 'absent';
-    const s2 = d.slot2 === 'absent';
-    const dateStr = new Date(date).toLocaleDateString('en-IN', {weekday:'short', day:'numeric', month:'short'});
-    return '<tr>' +
-      '<td style="padding:10px 16px;font-weight:600">' + dateStr + '</td>' +
-      '<td><span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;background:' + (s1?'rgba(224,82,82,0.1)':'rgba(42,157,110,0.1)') + ';color:' + (s1?'var(--red)':'var(--green)') + '">' + (s1?'Absent':'Present') + '</span></td>' +
-      '<td><span style="padding:3px 10px;border-radius:6px;font-size:0.75rem;font-weight:700;background:' + (s2?'rgba(224,82,82,0.1)':'rgba(42,157,110,0.1)') + ';color:' + (s2?'var(--red)':'var(--green)') + '">' + (s2?'Absent':'Present') + '</span></td>' +
-      '</tr>';
+  document.getElementById('att-cards').innerHTML = subjects.map(sub => {
+    const recs = allAttendance.filter(a=>a.subjects?.name===sub);
+    const present = recs.filter(a=>a.status==='present').length;
+    const pct = recs.length ? Math.round((present/recs.length)*100) : 0;
+    const cls = pct>=80?'good':pct>=70?'warn':'danger';
+    const fillCls = pct>=80?'background:var(--green)':pct>=70?'background:var(--orange)':'background:var(--red)';
+    return `<div class="att-card"><div class="att-pct ${cls}">${pct}%</div><div class="att-subj">${sub}</div><div class="att-counts">${present} / ${recs.length} classes</div><div class="mini-bar"><div class="mini-fill" style="width:${pct}%;${fillCls}"></div></div></div>`;
   }).join('');
-  wrap.innerHTML = '<table style="width:100%;border-collapse:collapse"><thead><tr style="border-bottom:2px solid var(--border)"><th style="padding:10px 16px;text-align:left;font-size:0.75rem;color:var(--muted)">Date</th><th style="padding:10px 16px;text-align:left;font-size:0.75rem;color:var(--muted)">Class 1</th><th style="padding:10px 16px;text-align:left;font-size:0.75rem;color:var(--muted)">Class 2</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+  const recent = allAttendance.slice(0, 20);
+  document.getElementById('att-log').innerHTML = `<table class="rtbl"><thead><tr><th>Date</th><th>Subject</th><th>Status</th></tr></thead><tbody>${recent.map(a=>`<tr><td>${new Date(a.date).toLocaleDateString('en-IN')}</td><td>${a.subjects?.name||'—'}</td><td style="font-weight:700;color:${a.status==='present'?'var(--green)':a.status==='late'?'var(--orange)':'var(--red)'}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</td></tr>`).join('')}</tbody></table>`;
 }
 
 // ── Render performance ──
@@ -945,8 +644,8 @@ function renderPerformance() {
   document.getElementById('perf-avg').textContent = avg ? avg + '%' : 'N/A';
   document.getElementById('perf-stats').innerHTML = `
     <div class="ps-item"><div class="ps-val">${allResults.length}</div><div class="ps-lbl">Exams Taken</div></div>
-    <div class="ps-item"><div class="ps-val">${calcOverallAttendance()||'N/A'}</div><div class="ps-lbl">Attendance</div></div>
-    `;
+    <div class="ps-item"><div class="ps-val">${calcOverallAttendance()||'N/A'}${calcOverallAttendance()?'%':''}</div><div class="ps-lbl">Attendance</div></div>
+    <div class="ps-item"><div class="ps-val">${avg||'--'}${avg?'%':''}</div><div class="ps-lbl">Best Score</div></div>`;
 
   // Subject bars
   const subjectScores = {};
@@ -970,15 +669,17 @@ function renderPerformance() {
   if (allResults.length === 0) {
     document.getElementById('results-tbody').innerHTML = '<tr><td colspan="3" class="empty-state" style="padding:24px;text-align:center;color:var(--muted)">No results yet</td></tr>';
   } else {
-    const gradeClass = g => ({ 'A+':'g-aplus','A':'g-a','B':'g-b','C':'g-c','D':'g-c','F':'g-f' }[g]||'g-b');
-    document.getElementById('results-tbody').innerHTML = allResults.slice(0,8).map(r=>`<tr><td>${r.exams?.title||'Exam'}</td><td style="font-weight:700">${r.marks_obtained}/${r.total_marks}</td><td style="font-size:0.8rem;color:var(--muted)">${r.total_marks ? Math.round((r.marks_obtained/r.total_marks)*100)+'%' : '—'}</td></tr>`).join('');
+    document.getElementById('results-tbody').innerHTML = allResults.slice(0,8).map(r=>{
+      const pct = r.total_marks ? Math.round(r.marks_obtained/r.total_marks*100) : null;
+      const pctColor = pct>=75?'var(--green)':pct>=50?'var(--orange)':'var(--red)';
+      return `<tr><td>${r.exams?.title||'Exam'}</td><td style="font-weight:700">${r.marks_obtained}/${r.total_marks||'?'}</td><td style="font-weight:700;color:${pctColor}">${pct!=null?pct+'%':'--'}</td></tr>`;
+    }).join('');
   }
 }
 
 // ── Render exams ──
 async function renderExams() {
   const { data: exams } = await sb.from('exams').select('*, subjects(name)').eq('is_published', true).order('scheduled_date', { ascending: true });
-  allExams = exams || [];
   if (!exams || exams.length === 0) { document.getElementById('exams-grid').innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="ei">📝</div><div class="et">No exams scheduled</div><div class="es">Your teachers haven\'t scheduled any exams yet.</div></div>'; return; }
   const resultMap = {};
   allResults.forEach(r => resultMap[r.exams?.id || r.exam_id] = r);
@@ -988,98 +689,35 @@ async function renderExams() {
     const upcoming = new Date(ex.scheduled_date) > now;
     const status = done ? 'done' : upcoming ? 'upcoming' : 'live';
     const statusHtml = { done:`<span class="exam-status es-done">COMPLETED</span>`, upcoming:`<span class="exam-status es-up">UPCOMING</span>`, live:`<span class="exam-status es-live">● AVAILABLE</span>` }[status];
-    const footer = done ? `<div class="score-badge">${done.marks_obtained}/${done.total_marks} · ${done.grade}</div><button class="take-btn" style="background:var(--cream-dark);color:var(--navy)">View Result</button>` : upcoming ? `<span style="font-size:0.75rem;color:var(--muted)">Opens ${new Date(ex.scheduled_date).toLocaleDateString('en-IN')}</span><button class="take-btn off">Not Open Yet</button>` : `<span></span><button class="take-btn" onclick="startExam('${ex.id}')">Start Exam →</button>`;
+    const donePct = done && done.total_marks ? Math.round(done.marks_obtained/done.total_marks*100)+'%' : '';
+    const footer = done ? `<div class="score-badge">${done.marks_obtained}/${done.total_marks||'?'} · ${donePct}</div><button class="take-btn" style="background:var(--cream-dark);color:var(--navy)">View Result</button>` : upcoming ? `<span style="font-size:0.75rem;color:var(--muted)">Opens ${new Date(ex.scheduled_date).toLocaleDateString('en-IN')}</span><button class="take-btn off">Not Open Yet</button>` : `<span></span><button class="take-btn" onclick="startExam('${ex.id}')">Start Exam →</button>`;
     return `<div class="exam-card">${statusHtml}<div class="exam-title">${ex.title}</div><div class="exam-detail">${ex.subjects?.name||''} · ${ex.total_marks} marks${ex.duration_minutes?' · '+ex.duration_minutes+' mins':''}</div><div class="exam-footer">${footer}</div></div>`;
   }).join('');
 }
 
 async function startExam(examId) {
-  var exam = allExams.find(function(e){ return e.id === examId; });
-  if (!exam) { alert('Exam not found. Please refresh.'); return; }
-  var now = new Date();
-  if (exam.start_time && now < new Date(exam.start_time)) {
-    var opts = {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit',hour12:true};
-    alert('This exam opens on ' + new Date(exam.start_time).toLocaleString('en-IN', opts));
-    return;
-  }
-  if (exam.end_time && now > new Date(exam.end_time)) {
-    alert('This exam has ended.'); return;
-  }
-  var examType = exam.exam_type || exam.type || 'mcq';
-  window.location.href = examType === 'subjective'
-    ? 'exam-subjective.html?exam_id=' + examId
-    : 'exam-take.html?exam_id=' + examId;
+  window.location.href = `exam-take.html?exam_id=${examId}`;
 }
 
 // ── Render doubts ──
 function renderDoubts() {
-  if (allDoubts.length === 0) {
-    document.getElementById('doubts-list').innerHTML = '<div class="empty-state"><div class="ei">&#x1F4AC;</div><div class="et">No doubts posted yet</div><div class="es">Post your first doubt above.</div></div>';
-    return;
-  }
-  var el = document.getElementById('doubts-list');
-  el.innerHTML = allDoubts.map(function(d) {
-    var attachHtml = d.attachment_url
-      ? '<a href="' + d.attachment_url + '" target="_blank"><img src="' + d.attachment_url + '" style="max-height:140px;max-width:100%;border-radius:8px;border:1px solid var(--border);margin-top:8px;display:block;" /></a>'
-      : '';
-    var replyHtml = d.reply
-      ? '<div style="margin-top:10px;background:rgba(26,46,90,0.04);border-radius:8px;padding:10px;border-left:3px solid var(--gold);"><div style="font-size:0.7rem;font-weight:700;color:var(--gold);margin-bottom:3px;">TEACHER REPLY &middot; ' + (d.replied_at ? new Date(d.replied_at).toLocaleDateString('en-IN') : '') + '</div><div style="font-size:0.8rem;color:var(--navy);line-height:1.6;">' + d.reply + '</div></div>'
-      : '<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;font-style:italic;">Awaiting teacher reply&hellip;</div>';
-    var teacherName = d.teachers ? d.teachers.full_name : '';
-    var teacherBadge = teacherName
-      ? '<span style="font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(26,46,90,0.08);color:var(--navy);margin-left:6px;">To: ' + teacherName + '</span>'
-      : '';
-    return '<div data-doubt-id="' + d.id + '" style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">' +
-      '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px;">' +
-        '<div style="font-size:0.8rem;font-weight:700;color:var(--navy);">' + (d.subject || 'General') + teacherBadge + ' &middot; ' + new Date(d.created_at).toLocaleDateString('en-IN') + '</div>' +
-        '<button data-id="' + d.id + '" data-url="' + (d.attachment_url || '') + '" class="doubt-del-btn" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:0.72rem;padding:2px 6px;border-radius:6px;" title="Delete doubt">&#x2715;</button>' +
-      '</div>' +
-      '<div style="font-size:0.82rem;color:var(--navy);line-height:1.6;">' + d.message + '</div>' +
-      attachHtml + replyHtml + '</div>';
-  }).join('');
-  // Delegate delete clicks
-  el.querySelectorAll('.doubt-del-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() { deleteDoubt(this.dataset.id, this.dataset.url); });
-  });
+  if (allDoubts.length === 0) { document.getElementById('doubts-list').innerHTML='<div class="empty-state"><div class="ei">💬</div><div class="et">No doubts posted yet</div><div class="es">Post your first doubt above.</div></div>'; return; }
+  document.getElementById('doubts-list').innerHTML = allDoubts.map(d=>`
+    <div style="border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px;">
+      <div style="font-size:0.8rem;font-weight:700;color:var(--navy);margin-bottom:4px;">${d.subject||'General'} · ${new Date(d.created_at).toLocaleDateString('en-IN')}</div>
+      <div style="font-size:0.82rem;color:var(--navy);line-height:1.6;">${d.message}</div>
+      ${d.reply?`<div style="margin-top:10px;background:rgba(26,46,90,0.04);border-radius:8px;padding:10px;border-left:3px solid var(--gold);"><div style="font-size:0.7rem;font-weight:700;color:var(--gold);margin-bottom:3px;">TEACHER REPLY · ${d.replied_at?new Date(d.replied_at).toLocaleDateString('en-IN'):''}</div><div style="font-size:0.8rem;color:var(--navy);line-height:1.6;">${d.reply}</div></div>`:'<div style="font-size:0.72rem;color:var(--muted);margin-top:8px;font-style:italic;">Awaiting teacher reply…</div>'}
+    </div>`).join('');
 }
 
 async function postDoubt() {
   if (!studentData) return;
   const subject = document.getElementById('doubt-subject').value;
-  const teacherSel = document.getElementById('doubt-teacher');
-  const teacherId = teacherSel && teacherSel.style.display !== 'none' ? teacherSel.value : null;
   const message = document.getElementById('doubt-text').value.trim();
-  if (!subject) { alert('Please select a subject.'); return; }
-  if (teacherSel && teacherSel.style.display !== 'none' && !teacherId) { alert('Please select a teacher to address your doubt to.'); return; }
-  if (!message) { alert('Please describe your doubt.'); return; }
-
-  const btn = document.getElementById('doubt-submit-btn');
-  if (btn) { btn.disabled = true; btn.textContent = 'Posting…'; }
-
-  let attachmentUrl = null;
-  if (doubtImageFile) {
-    const path = 'doubts/' + currentUser.id + '/' + Date.now() + '_' + doubtImageFile.name.replace(/\s+/g,'_');
-    const { error: upErr } = await sb.storage.from('notes').upload(path, doubtImageFile, { upsert: true });
-    if (!upErr) {
-      const { data: urlData } = sb.storage.from('notes').getPublicUrl(path);
-      attachmentUrl = urlData.publicUrl;
-    }
-  }
-
-  const { error } = await sb.from('doubts').insert({
-    content_id: null, student_id: studentData.id,
-    message, subject, attachment_url: attachmentUrl,
-    teacher_id: teacherId
-  });
-
-  if (btn) { btn.disabled = false; btn.textContent = 'Post Doubt'; }
-
+  if (!message) { alert('Please describe your doubt first.'); return; }
+  const { error } = await sb.from('doubts').insert({ content_id: null, student_id: studentData.id, message, subject });
   if (!error) {
     document.getElementById('doubt-text').value = '';
-    document.getElementById('doubt-subject').value = '';
-    var dtSel = document.getElementById('doubt-teacher');
-    if (dtSel) { dtSel.value = ''; dtSel.style.display = 'none'; }
-    clearDoubtImage();
     await loadDoubts();
     renderDoubts();
   }
@@ -1094,37 +732,20 @@ function renderProfile() {
   document.getElementById('prof-name').textContent = name;
   const programs = studentData.enrollments?.map(e=>e.programs?.name).filter(Boolean) || [];
   const board = studentData.primary_board || '—';
-  var cls3 = studentData.current_class || (studentData.enrollments && studentData.enrollments[0] && studentData.enrollments[0].programs ? studentData.enrollments[0].programs.class_level : null);
-  var clsStr = cls3 ? 'Class ' + cls3 + ' · ' : '';
-  document.getElementById('prof-detail').textContent = clsStr + (board || '') + ' · ThinkArk Academy';
-  var cls4 = studentData.current_class || (studentData.enrollments && studentData.enrollments[0] && studentData.enrollments[0].programs ? studentData.enrollments[0].programs.class_level : null);
-  var tagItems = [studentData.primary_board ? studentData.primary_board : null, cls4 ? 'Class ' + cls4 : null].filter(Boolean);
-  document.getElementById('prof-tags').innerHTML = tagItems.map(function(t) {
-    return '<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:Barlow Condensed,sans-serif;letter-spacing:0.5px;">' + t + '</span>';
-  }).join('');
-  var cls2 = studentData.current_class || (studentData.enrollments && studentData.enrollments[0] && studentData.enrollments[0].programs ? studentData.enrollments[0].programs.class_level : null);
-  var clsLabel = cls2 ? 'Class ' + cls2 : '—';
+  document.getElementById('prof-detail').textContent = `${programs.length ? programs.join(' + ') + ' · ' : ''}${board} · ThinkArk Academy`;
+  document.getElementById('prof-tags').innerHTML = [studentData.primary_board, ...programs].map(t=>`<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${t}</span>`).join('');
   document.getElementById('prof-details-list').innerHTML = [
-    ['Full Name', name], ['Class', clsLabel], ['Board', studentData.primary_board||'—'],
-    ['Email', studentData.email||'—'],
+    ['Full Name', name], ['Email', studentData.email], ['Board', studentData.primary_board],
     ['Parent Name', studentData.parent_name||'—'], ['Parent Phone', studentData.parent_phone||'—'],
     ['Admission Date', studentData.admission_date ? new Date(studentData.admission_date).toLocaleDateString('en-IN') : '—']
-  ].map(function(item, i, a) {
-    var k = item[0], v = item[1];
-    return '<div style="display:flex;justify-content:space-between;padding:10px 0;' + (i<a.length-1?'border-bottom:1px solid var(--border);':'') + 'font-size:0.82rem;"><span style="color:var(--muted)">' + k + '</span><span style="font-weight:600">' + v + '</span></div>';
-  }).join('');
-  document.getElementById('prof-programs').innerHTML = programs.length ? programs.map(p=>`<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;"><div style="width:36px;height:36px;background:rgba(26,46,90,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem">🎓</div><div><div style="font-size:0.85rem;font-weight:700">${p}</div><div style="font-size:0.72rem;color:var(--muted);margin-top:2px">Active · 2025–26</div></div><span style="margin-left:auto;background:rgba(42,157,110,0.1);color:var(--green);font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:8px;font-family:Barlow Condensed,sans-serif">ACTIVE</span></div>`).join('') : '<div style="text-align:center;padding:20px;color:var(--muted);font-size:0.82rem;">No programs enrolled yet</div>';
+  ].map(([k,v],i,a)=>`<div style="display:flex;justify-content:space-between;padding:10px 0;${i<a.length-1?'border-bottom:1px solid var(--border);':''}font-size:0.82rem;"><span style="color:var(--muted)">${k}</span><span style="font-weight:600">${v}</span></div>`).join('');
+  document.getElementById('prof-programs').innerHTML = programs.length ? programs.map(p=>`<div style="border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;"><div style="width:36px;height:36px;background:rgba(26,46,90,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:0.9rem">🎓</div><div><div style="font-size:0.85rem;font-weight:700">${p}</div><div style="font-size:0.72rem;color:var(--muted);margin-top:2px">Active · 2025–26</div></div><span style="margin-left:auto;background:rgba(42,157,110,0.1);color:var(--green);font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:8px;font-family:'Barlow Condensed',sans-serif">ACTIVE</span></div>`).join('') : '<div style="text-align:center;padding:20px;color:var(--muted);font-size:0.82rem;">No programs enrolled yet</div>';
 }
 
 // ── Helpers ──
 function calcOverallAttendance() {
-  if (!allAttendance.length) return 'N/A';
-  // Total slots = unique dates * 2
-  const dates = new Set(allAttendance.map(function(a){ return a.date; }));
-  const totalSlots = dates.size * 2;
-  const absentSlots = allAttendance.filter(function(a){ return a.status === 'absent'; }).length;
-  const attendedSlots = totalSlots - absentSlots;
-  return attendedSlots + '/' + totalSlots;
+  if (!allAttendance.length) return null;
+  return Math.round((allAttendance.filter(a=>a.status==='present').length/allAttendance.length)*100);
 }
 function calcAvgScore() {
   if (!allResults.length) return null;
@@ -1150,439 +771,17 @@ function showPage(id, navEl) {
   document.getElementById('tbTitle').textContent = pageTitles[id] || id;
   window.scrollTo(0,0);
   // Lazy render on first visit
-  if (id==='notes') {
-    renderNotes();
-    var nb = document.getElementById('nb-notes'); if (nb) nb.textContent = '';
-  }
-  if (id==='schedule') renderSchedule();
-  if (id==='settings') renderSettings();
+  if (id==='notes') renderNotes();
   if (id==='videos') renderVideos();
-  if (id==='notifications') { renderNotifications(); markNotificationsRead(); }
+  if (id==='notifications') renderNotifications();
   if (id==='attendance') renderAttendance();
   if (id==='performance') renderPerformance();
   if (id==='exams') renderExams();
   if (id==='doubts') renderDoubts();
 }
 
-
-// ══════════════════════════════════════════════
-// TIMETABLE
-// ══════════════════════════════════════════════
-async function loadTimetable() {
-  if (!studentData) return;
-  var cls = studentData.current_class || (studentData.enrollments && studentData.enrollments[0] && studentData.enrollments[0].programs ? studentData.enrollments[0].programs.class_level : null);
-  if (!cls) { allTimetable = []; return; }
-  // Load 30 days back + 30 days forward so student can browse
-  var today = new Date();
-  var from = new Date(today); from.setDate(today.getDate() - 30);
-  var to = new Date(today); to.setDate(today.getDate() + 60);
-  var board = studentData.primary_board || null;
-  var ttQ = sb.from('timetable')
-    .select('*, teachers(id, full_name)')
-    .eq('class_level', cls)
-    .gte('date', from.toISOString().split('T')[0])
-    .lte('date', to.toISOString().split('T')[0]);
-  // Show Combined batches + student's own board
-  if (board) ttQ = ttQ.or('board.eq.Combined,board.eq.' + board);
-  var res = await ttQ.order('date').order('slot_order');
-  allTimetable = res.data || [];
-}
-
-const DAY_NAMES = ['', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const SUBJ_COLORS = {
-  'Mathematics': { bg:'#fef8ee', border:'#c9a84c', dot:'#c9a84c' },
-  'Science':     { bg:'#eef8ee', border:'#2a9d6e', dot:'#2a9d6e' },
-  'English':     { bg:'#eef0f8', border:'#2d4a8a', dot:'#2d4a8a' },
-  'Hindi':       { bg:'#fef0ee', border:'#e05252', dot:'#e05252' },
-  'Social Studies': { bg:'#f3eeff', border:'#7c4dff', dot:'#7c4dff' },
-  'Physics':     { bg:'#eef8ee', border:'#2a9d6e', dot:'#2a9d6e' },
-  'Chemistry':   { bg:'#fff8ee', border:'#e07832', dot:'#e07832' },
-  'Biology':     { bg:'#eef8f3', border:'#1b7a4e', dot:'#1b7a4e' },
-  'Computer Science': { bg:'#eef0f8', border:'#2d4a8a', dot:'#2d4a8a' },
-};
-function subjColor(subj) {
-  return SUBJ_COLORS[subj] || { bg:'#f2f2f2', border:'#aaa', dot:'#888' };
-}
-
-let schedDaySelected = null;
-
-var schedSelectedDate = null;
-
-function renderSchedule() {
-  // Get all unique dates in timetable
-  var dates = [];
-  allTimetable.forEach(function(s) { if (dates.indexOf(s.date) === -1) dates.push(s.date); });
-  dates.sort();
-
-  var todayStr = new Date().toISOString().split('T')[0];
-  if (!schedSelectedDate || dates.indexOf(schedSelectedDate) === -1) {
-    schedSelectedDate = dates.indexOf(todayStr) !== -1 ? todayStr : (dates.length ? dates[0] : todayStr);
-  }
-
-  var sub = document.getElementById('sched-sub');
-  var cls = studentData.current_class || (studentData.enrollments && studentData.enrollments[0] && studentData.enrollments[0].programs ? studentData.enrollments[0].programs.class_level : '');
-
-  if (!allTimetable.length) {
-    if (sub) sub.textContent = 'No timetable set yet';
-    document.getElementById('sched-day-tabs').innerHTML = '';
-    document.getElementById('sched-day-view').innerHTML = '';
-    document.getElementById('sched-week-view').innerHTML = '<div class="empty-state"><div class="ei">&#x1F4C5;</div><div class="et">Timetable not set yet</div><div class="es">Your teacher will add your schedule soon.</div></div>';
-    return;
-  }
-
-  if (sub) sub.textContent = 'Class ' + cls + ' · ' + dates.length + ' days scheduled';
-
-  // Build date tabs — show a rolling window of 7 dates around selected
-  var tabsEl = document.getElementById('sched-day-tabs');
-  var selIdx = dates.indexOf(schedSelectedDate);
-  var winStart = Math.max(0, selIdx - 3);
-  var winEnd = Math.min(dates.length, winStart + 7);
-  var window7 = dates.slice(winStart, winEnd);
-
-  var tabsHtml = '';
-  if (winStart > 0) tabsHtml += '<button onclick="schedShift(-7)" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:white;color:var(--muted);font-size:0.8rem;cursor:pointer;">&larr;</button>';
-  window7.forEach(function(d) {
-    var isActive = d === schedSelectedDate;
-    var isToday = d === todayStr;
-    var dt = new Date(d + 'T00:00:00');
-    var dayName = dt.toLocaleDateString('en-IN', {weekday:'short'});
-    var dayNum = dt.getDate();
-    tabsHtml += '<button data-date="' + d + '" class="sched-tab-btn" style="padding:6px 12px;border-radius:8px;border:none;font-family:Barlow,sans-serif;font-size:0.8rem;font-weight:' + (isActive ? '700' : '500') + ';cursor:pointer;background:' + (isActive ? 'var(--navy)' : 'white') + ';color:' + (isActive ? 'var(--cream)' : 'var(--muted)') + ';box-shadow:' + (isActive ? '0 2px 8px rgba(26,46,90,0.2)' : 'none') + ';transition:all 0.15s;white-space:nowrap;line-height:1.3;">' +
-      dayName + (isToday ? ' &#x2736;' : '') + '<br><span style="font-size:0.65rem;">' + dayNum + '</span>' +
-    '</button>';
-  });
-  if (winEnd < dates.length) tabsHtml += '<button onclick="schedShift(7)" style="padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:white;color:var(--muted);font-size:0.8rem;cursor:pointer;">&rarr;</button>';
-  tabsEl.innerHTML = tabsHtml;
-  // Delegate click events (avoids inline onclick quote issues)
-  tabsEl.querySelectorAll('.sched-tab-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() { selectSchedDay(this.dataset.date); });
-  });
-
-  renderSchedDay(schedSelectedDate);
-  renderSchedWeek(dates.slice(winStart, winEnd));
-}
-
-function schedShift(delta) {
-  var dates = [];
-  allTimetable.forEach(function(s) { if (dates.indexOf(s.date) === -1) dates.push(s.date); });
-  dates.sort();
-  var idx = dates.indexOf(schedSelectedDate) + delta;
-  idx = Math.max(0, Math.min(dates.length - 1, idx));
-  schedSelectedDate = dates[idx];
-  renderSchedule();
-}
-
-function selectSchedDay(date) {
-  schedSelectedDate = date;
-  renderSchedule();
-}
-
-function renderSchedDay(date) {
-  var slots = allTimetable.filter(function(s) { return s.date === date; });
-  var el = document.getElementById('sched-day-view');
-  var dt = new Date(date + 'T00:00:00');
-  var dateLabel = dt.toLocaleDateString('en-IN', {weekday:'long', day:'numeric', month:'long'});
-  if (!slots.length) { el.innerHTML = '<div class="card" style="text-align:center;padding:32px;color:var(--muted)">No periods on ' + dateLabel + '</div>'; return; }
-  var html = '<div class="card"><div class="card-title">' + dateLabel + ' — ' + slots.length + ' period' + (slots.length !== 1 ? 's' : '') + '</div><div style="display:flex;flex-direction:column;gap:8px;">';
-  slots.forEach(function(s, i) {
-    var c = subjColor(s.subject);
-    var teacherName = s.teachers ? s.teachers.full_name : '';
-    html += '<div style="display:flex;align-items:center;gap:14px;padding:12px 14px;border-radius:10px;background:' + c.bg + ';border-left:3px solid ' + c.border + ';">' +
-      '<div style="font-family:Barlow Condensed,sans-serif;font-weight:800;font-size:0.75rem;color:' + c.dot + ';min-width:36px;text-align:center;line-height:1.2;">' + s.time_start + '<br><span style="font-size:0.6rem;color:var(--muted)">' + s.time_end + '</span></div>' +
-      '<div style="width:1px;height:32px;background:' + c.border + ';opacity:0.3;flex-shrink:0;"></div>' +
-      '<div style="flex:1;">' +
-        '<div style="font-family:Barlow Condensed,sans-serif;font-weight:700;font-size:0.95rem;color:var(--navy);">' + s.subject + '</div>' +
-        (teacherName ? '<div style="font-size:0.72rem;color:var(--muted);margin-top:2px;">' + teacherName + '</div>' : '') +
-      '</div>' +
-      '<div style="font-family:Barlow Condensed,sans-serif;font-size:0.72rem;font-weight:800;color:var(--muted);background:white;padding:2px 8px;border-radius:6px;">P' + (i+1) + '</div>' +
-    '</div>';
-  });
-  html += '</div></div>';
-  el.innerHTML = html;
-}
-
-function renderSchedWeek(dates) {
-  var el = document.getElementById('sched-week-view');
-  var cols = '';
-  dates.forEach(function(d) {
-    var slots = allTimetable.filter(function(s) { return s.date === d; });
-    var dt = new Date(d + 'T00:00:00');
-    var dayLabel = dt.toLocaleDateString('en-IN', {weekday:'short', day:'numeric'});
-    cols += '<div style="min-width:110px;">';
-    cols += '<div style="font-family:Barlow Condensed,sans-serif;font-weight:800;font-size:0.75rem;color:var(--muted);margin-bottom:8px;letter-spacing:0.5px;">' + dayLabel + '</div>';
-    if (!slots.length) {
-      cols += '<div style="font-size:0.7rem;color:var(--muted);padding:8px 0;font-style:italic;">No periods</div>';
-    } else {
-      slots.forEach(function(s) {
-        var c = subjColor(s.subject);
-        cols += '<div style="padding:6px 8px;border-radius:7px;background:' + c.bg + ';border-left:2px solid ' + c.border + ';margin-bottom:5px;">' +
-          '<div style="font-size:0.73rem;font-weight:700;color:var(--navy);">' + s.subject + '</div>' +
-          '<div style="font-size:0.62rem;color:var(--muted);">' + s.time_start + '–' + s.time_end + '</div>' +
-        '</div>';
-      });
-    }
-    cols += '</div>';
-  });
-  el.innerHTML = '<div style="display:grid;grid-template-columns:repeat(' + dates.length + ',1fr);gap:10px;overflow-x:auto;">' + cols + '</div>';
-}
-
-function renderTodaySchedule() {
-  var todayStr = new Date().toISOString().split('T')[0];
-  var el = document.getElementById('dash-schedule');
-  if (!el) return;
-  var today = allTimetable.filter(function(s) { return s.date === todayStr; });
-  if (!today.length) {
-    el.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--muted);font-size:0.82rem;">No classes scheduled today</div>';
-    return;
-  }
-  var html = '';
-  today.forEach(function(s) {
-    var c = subjColor(s.subject);
-    var teacherName = s.teachers ? s.teachers.full_name : '';
-    html += '<div class="sb-block" style="background:' + c.bg + ';border-color:' + c.border + ';">' +
-      '<div class="sb-subj">' + s.subject + '</div>' +
-      '<div class="sb-detail">' + s.time_start + '–' + s.time_end + (teacherName ? ' · ' + teacherName : '') + '</div>' +
-    '</div>';
-  });
-  el.innerHTML = html;
-}
-
-// ══════════════════════════════════════════════
-// DOUBTS WITH IMAGE
-// ══════════════════════════════════════════════
-function handleDoubtImage(input) {
-  var file = input.files[0];
-  if (!file) return;
-
-  // Compress image before storing — target max 800px wide, quality 0.75
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var img = new Image();
-    img.onload = function() {
-      var maxW = 800;
-      var scale = img.width > maxW ? maxW / img.width : 1;
-      var w = Math.round(img.width * scale);
-      var h = Math.round(img.height * scale);
-      var canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0, w, h);
-      canvas.toBlob(function(blob) {
-        // Create a File from the blob so we have a proper name
-        doubtImageFile = new File([blob], file.name.replace(/\.[^.]+$/, '.jpg'), { type: 'image/jpeg' });
-        var thumb = document.getElementById('doubt-img-thumb');
-        thumb.src = canvas.toDataURL('image/jpeg', 0.75);
-        document.getElementById('doubt-img-preview').style.display = 'block';
-        // Show compressed size
-        var kb = Math.round(doubtImageFile.size / 1024);
-        var origKb = Math.round(file.size / 1024);
-        if (origKb > kb) {
-          thumb.title = 'Compressed: ' + origKb + 'KB → ' + kb + 'KB';
-        }
-      }, 'image/jpeg', 0.75);
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-
-function clearDoubtImage() {
-  doubtImageFile = null;
-  document.getElementById('doubt-img-input').value = '';
-  document.getElementById('doubt-img-preview').style.display = 'none';
-  document.getElementById('doubt-img-thumb').src = '';
-}
-
-// ══════════════════════════════════════════════
-// NOTES FILTERING (subject only — class/board handled at load time)
-// ══════════════════════════════════════════════
-function buildNoteCard(n) {
-  const isNew = (Date.now() - new Date(n.created_at)) < 86400000 * 2;
-  const CAT_LABELS = { chapter_notes:'Chapter Notes', question_bank:'Question Bank', worksheet:'Worksheet', homework:'Homework' };
-  const catBadge = n.category && CAT_LABELS[n.category]
-    ? '<span style="font-size:0.62rem;font-weight:700;padding:2px 7px;border-radius:10px;background:rgba(26,46,90,0.07);color:var(--navy-mid);margin-left:6px;">' + CAT_LABELS[n.category] + '</span>'
-    : '';
-  const fileBtn = n.file_url
-    ? '<div style="display:flex;gap:6px"><a href="' + n.file_url + '" target="_blank" class="dl-btn" style="text-decoration:none;background:var(--navy);color:white">&#128196; View</a><a href="' + n.file_url + '" download class="dl-btn" style="text-decoration:none;color:var(--navy);background:var(--cream-mid)">&#8595; Save</a></div>'
-    : '<span style="color:var(--muted);font-size:0.7rem">No file</span>';
-  return '<div class="note-card">' +
-    (isNew ? '<div class="nc-badge">NEW</div>' : '') +
-    '<div class="nc-subj" style="color:var(--gold);display:flex;align-items:center;">' + (n.subjects?.name || 'General') + catBadge + '</div>' +
-    '<div class="nc-title">' + n.title + '</div>' +
-    '<div class="nc-preview">' + (n.description || 'Study material uploaded by your teacher.') + '</div>' +
-    '<div class="nc-footer"><span>' + timeAgo(n.created_at) + '</span>' + fileBtn + '</div>' +
-    '</div>';
-}
-
-function filterNotesBySubject(subject, clickedChip) {
-  notesSubjectFilter = subject;
-  applyNotesFilters();
-}
-
-function filterNotesBySubjectDropdown(val) {
-  notesSubjectFilter = val || null;
-  applyNotesFilters();
-}
-
-function filterNotesByCategory(cat, chip) {
-  notesCategoryFilter = cat;
-  document.querySelectorAll('#category-chips .chip').forEach(function(c){ c.classList.remove('active'); });
-  if (chip) chip.classList.add('active');
-  applyNotesFilters();
-}
-
-function applyNotesFilters() {
-  const searchVal = (document.getElementById('notes-search') ? document.getElementById('notes-search').value.toLowerCase().trim() : '');
-  let filtered = allContent.filter(c => c.type === 'pdf' || c.type === 'document');
-  if (notesSubjectFilter) {
-    filtered = filtered.filter(c =>
-      (c.subjects && c.subjects.name === notesSubjectFilter) ||
-      (c.title && c.title.toLowerCase().includes(notesSubjectFilter.toLowerCase()))
-    );
-  }
-  if (notesCategoryFilter) filtered = filtered.filter(c => c.category === notesCategoryFilter);
-  if (searchVal) filtered = filtered.filter(c => c.title && c.title.toLowerCase().includes(searchVal));
-  document.getElementById('notes-sub').textContent = filtered.length + ' notes available';
-  const grid = document.getElementById('notes-grid');
-  if (!filtered.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="ei">📄</div><div class="et">No notes for this filter</div></div>';
-    return;
-  }
-  grid.innerHTML = filtered.map(buildNoteCard).join('');
-}
-
-// ══════════════════════════════════════════════
-// PROFILE EDIT
-// ══════════════════════════════════════════════
-let profileEditOpen = false;
-function toggleProfileEdit() {
-  profileEditOpen = !profileEditOpen;
-  const form = document.getElementById('prof-edit-form');
-  const readView = document.getElementById('prof-details-list');
-  const btn = document.getElementById('prof-edit-btn');
-  if (profileEditOpen) {
-    // Pre-fill
-    document.getElementById('edit-fullname').value = studentData.full_name || '';
-    document.getElementById('edit-parentname').value = studentData.parent_name || '';
-    document.getElementById('edit-parentphone').value = studentData.parent_phone || '';
-    form.style.display = 'flex';
-    readView.style.display = 'none';
-    btn.textContent = '✕ Cancel';
-  } else {
-    form.style.display = 'none';
-    readView.style.display = 'flex';
-    btn.textContent = '✏️ Edit';
-  }
-}
-
-async function saveProfile() {
-  const fullName = document.getElementById('edit-fullname').value.trim();
-  const parentName = document.getElementById('edit-parentname').value.trim();
-  const parentPhone = document.getElementById('edit-parentphone').value.trim();
-  if (!fullName) { alert('Full name cannot be empty.'); return; }
-
-  const btn = document.getElementById('prof-save-btn');
-  btn.disabled = true; btn.textContent = 'Saving…';
-
-  // Update users table (full_name)
-  const { error: userErr } = await sb.from('users').update({ full_name: fullName }).eq('id', currentUser.id);
-  // Update students table (parent info)
-  const { error: stuErr } = await sb.from('students').update({ parent_name: parentName, parent_phone: parentPhone }).eq('user_id', currentUser.id);
-
-  btn.disabled = false; btn.textContent = 'Save Changes';
-
-  if (userErr || stuErr) { alert('Error saving: ' + (userErr?.message || stuErr?.message)); return; }
-
-  // Update local state
-  studentData.full_name = fullName;
-  studentData.parent_name = parentName;
-  studentData.parent_phone = parentPhone;
-
-  toggleProfileEdit();
-  renderProfile();
-  renderSidebarUser();
-  // Show a brief success indicator
-  const editBtn = document.getElementById('prof-edit-btn');
-  if (editBtn) { editBtn.textContent = '✓ Saved'; setTimeout(() => { editBtn.textContent = '✏️ Edit'; }, 2000); }
-}
-
 // ── Start ──
 init();
-
-// ── Mobile sidebar ──
-function toggleSidebar() {
-  var sb = document.querySelector('.sidebar');
-  var bd = document.getElementById('sidebar-backdrop');
-  var open = sb.classList.contains('open');
-  if (open) closeSidebar();
-  else { sb.classList.add('open'); bd.classList.add('open'); document.body.style.overflow = 'hidden'; }
-}
-function closeSidebar() {
-  document.querySelector('.sidebar').classList.remove('open');
-  var bd = document.getElementById('sidebar-backdrop');
-  if (bd) bd.classList.remove('open');
-  document.body.style.overflow = '';
-}
-// Auto-close sidebar on nav item click (mobile)
-document.addEventListener('DOMContentLoaded', function() {
-  document.querySelectorAll('.nav-item').forEach(function(item) {
-    item.addEventListener('click', function() {
-      if (window.innerWidth <= 768) closeSidebar();
-    });
-  });
-});
-
-
-// ── Settings / Change Password ──
-async function changePassword() {
-  var current = document.getElementById('pw-current').value;
-  var newPw = document.getElementById('pw-new').value;
-  var confirm = document.getElementById('pw-confirm').value;
-  var alertEl = document.getElementById('pw-alert');
-  var btn = document.getElementById('pw-save-btn');
-
-  function showPwMsg(msg, ok) {
-    alertEl.textContent = msg;
-    alertEl.style.display = 'block';
-    alertEl.style.background = ok ? 'rgba(42,157,110,0.1)' : 'rgba(224,82,82,0.08)';
-    alertEl.style.border = ok ? '1px solid rgba(42,157,110,0.3)' : '1px solid rgba(224,82,82,0.25)';
-    alertEl.style.color = ok ? 'var(--green)' : 'var(--red)';
-  }
-
-  if (!current || !newPw || !confirm) { showPwMsg('All fields are required.', false); return; }
-  if (newPw.length < 6) { showPwMsg('New password must be at least 6 characters.', false); return; }
-  if (newPw !== confirm) { showPwMsg('New passwords do not match.', false); return; }
-
-  btn.disabled = true; btn.textContent = 'Updating…';
-
-  // Re-authenticate first to verify current password
-  var email = currentUser ? currentUser.email : '';
-  var signInRes = await sb.auth.signInWithPassword({ email: email, password: current });
-  if (signInRes.error) {
-    showPwMsg('Current password is incorrect.', false);
-    btn.disabled = false; btn.textContent = 'Update Password';
-    return;
-  }
-
-  // Update password
-  var updateRes = await sb.auth.updateUser({ password: newPw });
-  btn.disabled = false; btn.textContent = 'Update Password';
-
-  if (updateRes.error) {
-    showPwMsg('Error: ' + updateRes.error.message, false);
-  } else {
-    showPwMsg('Password updated successfully!', true);
-    document.getElementById('pw-current').value = '';
-    document.getElementById('pw-new').value = '';
-    document.getElementById('pw-confirm').value = '';
-  }
-}
-
-function renderSettings() {
-  var emailEl = document.getElementById('settings-email');
-  if (emailEl && currentUser) emailEl.textContent = currentUser.email || '—';
-}
-
 </script>
 </body>
 </html>
