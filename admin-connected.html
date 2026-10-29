@@ -342,7 +342,6 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div class="form-row fr3">
       <div class="fgroup"><label>Folder</label>
         <select id="c-folder">
-          <option value="Lecture Notes">Lecture Notes</option>
           <option value="Question Bank">Question Bank</option>
           <option value="Practice Test">Practice Test</option>
           <option value="Student Notes">Student Notes</option>
@@ -1631,7 +1630,7 @@ function openModal(id) {
     const cls = document.getElementById('c-class'); if(cls) cls.value='';
     const brd = document.getElementById('c-board'); if(brd) brd.value='All';
     const typ = document.getElementById('c-type'); if(typ) typ.value='pdf';
-    const fld = document.getElementById('c-folder'); if(fld) fld.value='Lecture Notes';
+    const fld = document.getElementById('c-folder'); if(fld) fld.value='Question Bank';
     contentFile = null;
     clearContentFile();
     bulkFiles = [];
