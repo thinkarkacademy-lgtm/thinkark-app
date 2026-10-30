@@ -434,7 +434,12 @@ async function loadContent() {
 }
 
 async function loadNotifications() {
-  const { data } = await sb.from('notifications').select('*, notification_reads!left(read_at)').or(`target.eq.all,target_user_id.eq.${currentUser.id}`).order('created_at', { ascending: false }).limit(20);
+  const cls = studentData?.current_class;
+  // Show: targeted to this user, OR class_level matches student's class, OR class_level is null (all classes)
+  let query = sb.from('notifications').select('*, notification_reads!left(read_at)')
+    .or(`target_user_id.eq.${currentUser.id},class_level.is.null${cls ? ',class_level.eq.' + cls : ''}`)
+    .order('created_at', { ascending: false }).limit(20);
+  const { data } = await query;
   allNotifications = data || [];
   const unread = allNotifications.filter(n => !n.notification_reads?.length);
   const dot = document.getElementById('notif-dot');

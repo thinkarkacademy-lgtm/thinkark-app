@@ -1055,8 +1055,9 @@ async function uploadContent() {
   toast(isAdmin ? 'Content published!' : 'Uploaded — pending admin approval.');
   if (isAdmin) {
     const notifTitle = 'New ' + (type === 'youtube_link' ? 'Video' : folder) + ' Added';
-    const notifBody = title + (cls && cls !== 'competitive' ? ' for Class ' + cls : '') + ' has been uploaded. Check your Notes tab.';
-    await sb.from('notifications').insert({ title: notifTitle, body: notifBody, target: 'all', sent_by: currentUser.id });
+    const notifBody = title + (cls && cls !== 'all' && cls !== 'competitive' ? ' for Class ' + cls : '') + ' has been uploaded. Check your Notes tab.';
+    const notifClass = cls && cls !== 'all' && cls !== 'competitive' ? parseInt(cls) : null;
+    await sb.from('notifications').insert({ title: notifTitle, body: notifBody, target: 'all', class_level: notifClass, sent_by: currentUser.id });
   }
   clearContentFile();
   closeModal('modal-upload');
@@ -1106,7 +1107,8 @@ async function uploadContentBulk() {
   if (done > 0) {
     toast(done + ' file' + (done!==1?'s':'') + ' uploaded' + (isAdmin?' and published':' — pending approval') + '!');
     if (isAdmin) {
-      await sb.from('notifications').insert({ title: done + ' new files in ' + folder, body: 'New content added' + (cls?' for Class '+cls:'') + '. Check your Notes tab.', target: 'all', sent_by: currentUser.id });
+      const bulkNotifClass = cls && cls !== 'all' && cls !== 'competitive' ? parseInt(cls) : null;
+      await sb.from('notifications').insert({ title: done + ' new files in ' + folder, body: 'New content added' + (cls && cls !== 'all' ? ' for Class ' + cls : '') + '. Check your Notes tab.', target: 'all', class_level: bulkNotifClass, sent_by: currentUser.id });
     }
   }
   bulkFiles = [];
