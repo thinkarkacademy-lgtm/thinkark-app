@@ -131,7 +131,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <path d="M8 38 Q12.5 35 17 38 Q21.5 41 26 38 Q30.5 35 35 38 Q39.5 41 42 38" stroke="#f0ede4" stroke-width="1" fill="none" stroke-linecap="round" opacity="0.5"/>
     </svg>
     <div><div class="ln">THINKARK</div><div class="lt">Academy</div></div>
-    <div class="admin-pill">Admin</div>
+    <div class="admin-pill" id="role-pill">Admin</div>
   </div>
   <div class="nav-grp">
     <div class="nav-grp-label">Overview</div>
@@ -148,16 +148,17 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div class="nav-grp-label">Content</div>
     <div class="nav-item" onclick="showPage('content',this)"><span class="ni">📄</span> Notes & Content</div>
     <div class="nav-item" onclick="showPage('exams',this)"><span class="ni">📝</span> Exam Manager</div>
+    <div class="nav-item" onclick="showPage('doubts',this)"><span class="ni">💬</span> Doubts <span class="nb" id="nb-doubts">—</span></div>
   </div>
-  <div class="nav-grp">
+  <div class="nav-grp admin-only-nav">
     <div class="nav-grp-label">Admissions</div>
     <div class="nav-item" onclick="showPage('crm',this)"><span class="ni">🎯</span> Lead CRM <span class="nb gold" id="nb-leads">—</span></div>
   </div>
   <div class="sb-bottom">
-    <div class="admin-card">
+    <div class="admin-card" style="cursor:pointer" onclick="showPage('my-profile',null)">
       <div class="admin-av" id="admin-av">—</div>
-      <div><div class="an" id="admin-name">Loading…</div><div class="ar">Admin</div></div>
-      <div class="sb-logout" onclick="handleLogout()">⏻</div>
+      <div><div class="an" id="admin-name">Loading…</div><div class="ar" id="admin-role-label">Admin</div></div>
+      <div class="sb-logout" onclick="event.stopPropagation();handleLogout()">⏻</div>
     </div>
   </div>
 </div>
@@ -276,7 +277,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
   </div>
 </div>
 
-<!-- CRM -->
+<!-- CRM (admin only) -->
 <div class="page" id="page-crm">
   <div class="ph">
     <div><div class="pt">Lead CRM</div><div class="ps" id="crm-sub">Loading…</div></div>
@@ -290,6 +291,37 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div class="chip" onclick="filterLeads('converted',this)">✅ Converted</div>
   </div>
   <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th style="padding-left:20px">Name</th><th>Phone</th><th>Class</th><th>Source</th><th>Status</th><th>Follow-up</th><th>Actions</th></tr></thead><tbody id="leads-tbody"><tr><td colspan="7"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
+</div>
+
+<!-- DOUBTS -->
+<div class="page" id="page-doubts">
+  <div class="ph"><div><div class="pt">Student Doubts</div><div class="ps" id="doubts-admin-sub">Loading…</div></div></div>
+  <div class="chip-bar">
+    <div class="chip active" onclick="filterDoubtsAdmin('all',this)">All</div>
+    <div class="chip" onclick="filterDoubtsAdmin('pending',this)">⏳ Pending</div>
+    <div class="chip" onclick="filterDoubtsAdmin('replied',this)">✅ Replied</div>
+  </div>
+  <div id="doubts-admin-list"><div class="skeleton" style="height:120px;border-radius:8px;margin-bottom:12px;"></div><div class="skeleton" style="height:120px;border-radius:8px;"></div></div>
+</div>
+
+<!-- MY PROFILE (teacher/admin) -->
+<div class="page" id="page-my-profile">
+  <div class="ph"><div><div class="pt">My Profile</div><div class="ps">Account details</div></div></div>
+  <div style="background:var(--navy);border-radius:16px;padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden;">
+    <div style="position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;border:50px solid rgba(201,168,76,0.07);"></div>
+    <div style="display:flex;align-items:center;gap:24px;">
+      <div class="admin-av" id="mp-av" style="width:64px;height:64px;font-size:1.4rem;background:linear-gradient(135deg,var(--navy-light),var(--gold));">—</div>
+      <div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.6rem;font-weight:800;color:white;line-height:1.1;" id="mp-name">—</div>
+        <div style="font-size:0.78rem;color:rgba(240,237,228,0.6);margin-top:4px;" id="mp-detail">ThinkArk Academy</div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;" id="mp-tags"></div>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Account Details</div>
+    <div id="mp-details-list"></div>
+  </div>
 </div>
 
 </div>
@@ -542,10 +574,11 @@ const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null, adminData = null;
+let allDoubtsAdmin = [];
 let allStudents = [], allLeads = [], allContent = [], allExams = [], allResults = [], allSubjects = [], allNotifs = [], allPrograms = [];
 let leadFilter = null, qCount = 1;
 
-const pageTitles = { dashboard:'Dashboard', students:'Students', attendance:'Attendance', marks:'Marks & Results', content:'Notes & Content', exams:'Exam Manager', 'notify-page':'Notifications', crm:'Lead CRM' };
+const pageTitles = { dashboard:'Dashboard', students:'Students', attendance:'Attendance', marks:'Marks & Results', content:'Notes & Content', exams:'Exam Manager', 'notify-page':'Notifications', crm:'Lead CRM', doubts:'Student Doubts', 'my-profile':'My Profile' };
 
 // -- Toast --
 function toast(msg, type='success') {
@@ -562,17 +595,26 @@ async function init() {
   const { data:user } = await sb.from('users').select('*').eq('id', currentUser.id).single();
   if (!user || (user.role !== 'admin' && user.role !== 'teacher')) { window.location.href='login-connected.html'; return; }
   adminData = user;
-  const name = user.full_name || 'Admin';
+  const isTeacher = user.role === 'teacher';
+  const name = user.full_name || (isTeacher ? 'Teacher' : 'Admin');
   const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('admin-name').textContent = name;
   document.getElementById('admin-av').textContent = initials;
   document.getElementById('top-av').textContent = initials;
+  document.getElementById('admin-role-label').textContent = isTeacher ? 'Teacher' : 'Admin';
+  document.getElementById('role-pill').textContent = isTeacher ? 'Teacher' : 'Admin';
+  // Hide admin-only nav items from teachers
+  if (isTeacher) {
+    document.querySelectorAll('.admin-only-nav').forEach(el => el.style.display = 'none');
+  }
   const h = new Date().getHours();
   const g = h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   document.getElementById('dash-greet').textContent = `${g}, ${name.split(' ')[0]} `;
   document.getElementById('dash-sub').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  await Promise.all([loadStudents(), loadLeads(), loadContent(), loadExams(), loadSubjects(), loadNotifs(), loadResults()]);
-  renderDashboard(); populateSubjectDropdowns();
+  const loads = [loadStudents(), loadContent(), loadExams(), loadSubjects(), loadNotifs(), loadResults(), loadDoubtsAdmin()];
+  if (!isTeacher) loads.push(loadLeads());
+  await Promise.all(loads);
+  renderDashboard(); populateSubjectDropdowns(); renderMyProfile();
 }
 
 async function handleLogout() { await sb.auth.signOut(); window.location.href='login-connected.html'; }
@@ -1612,6 +1654,91 @@ async function deleteLead(id) {
   toast('Lead deleted.'); await loadLeads(); renderLeads();
 }
 
+// -- Doubts (admin/teacher view) --
+async function loadDoubtsAdmin() {
+  const isTeacher = adminData && adminData.role === 'teacher';
+  let query = sb.from('doubts').select('*, students(id, current_class, users(full_name, email))').order('created_at', { ascending: false });
+  // Teachers see doubts for all students (subject filtering can be added later when teacher-subject mapping exists)
+  const { data } = await query;
+  allDoubtsAdmin = data || [];
+  const pending = allDoubtsAdmin.filter(d => !d.reply).length;
+  const badge = document.getElementById('nb-doubts');
+  if (badge) badge.textContent = pending || '';
+}
+
+let doubtsAdminFilter = 'all';
+function filterDoubtsAdmin(type, btn) {
+  doubtsAdminFilter = type;
+  document.querySelectorAll('#page-doubts .chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderDoubtsAdmin();
+}
+
+function renderDoubtsAdmin() {
+  const el = document.getElementById('doubts-admin-list');
+  if (!el) return;
+  let list = allDoubtsAdmin;
+  if (doubtsAdminFilter === 'pending') list = list.filter(d => !d.reply);
+  if (doubtsAdminFilter === 'replied') list = list.filter(d => !!d.reply);
+  const sub = document.getElementById('doubts-admin-sub');
+  if (sub) sub.textContent = `${allDoubtsAdmin.filter(d=>!d.reply).length} pending · ${allDoubtsAdmin.length} total`;
+  if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:0.85rem">No doubts ' + (doubtsAdminFilter !== 'all' ? 'in this category' : 'yet') + '.</div>'; return; }
+  el.innerHTML = list.map(d => {
+    const sName = d.students?.users?.full_name || 'Student';
+    const cls = d.students?.current_class ? 'Class ' + d.students.current_class : '';
+    const isPending = !d.reply;
+    return `<div style="border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:12px;background:white;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-weight:700;font-size:0.85rem;color:var(--navy)">${sName}</span>
+          ${cls?`<span style="font-size:0.7rem;background:rgba(26,46,90,0.08);color:var(--navy);padding:2px 8px;border-radius:6px;">${cls}</span>`:''}
+          ${d.subject?`<span style="font-size:0.7rem;background:rgba(201,168,76,0.12);color:var(--gold);padding:2px 8px;border-radius:6px;font-weight:700;">${d.subject}</span>`:''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:0.68rem;color:var(--muted)">${new Date(d.created_at).toLocaleDateString('en-IN')}</span>
+          <span style="font-size:0.68rem;font-weight:700;padding:2px 8px;border-radius:5px;${isPending?'background:rgba(239,68,68,0.1);color:#ef4444':'background:rgba(42,157,110,0.1);color:var(--green)'}">${isPending?'Pending':'Replied'}</span>
+        </div>
+      </div>
+      <div style="font-size:0.83rem;color:var(--navy);line-height:1.6;margin-bottom:8px;">${d.message}</div>
+      ${d.attachment_url ? `<div style="margin-bottom:8px;">${d.attachment_url.match(/\.(jpg|jpeg|png|gif|webp)$/i)?`<img src="${d.attachment_url}" style="max-width:100%;max-height:180px;border-radius:8px;object-fit:contain;border:1px solid var(--border);" onclick="window.open(this.src,'_blank')" style="cursor:pointer">` : `<a href="${d.attachment_url}" target="_blank" style="font-size:0.78rem;color:var(--navy);text-decoration:none;display:inline-flex;align-items:center;gap:5px;padding:5px 10px;background:var(--cream-mid);border-radius:6px;border:1px solid var(--border);">📄 View attachment</a>`}</div>` : ''}
+      ${d.reply ? `<div style="background:rgba(42,157,110,0.05);border-radius:8px;padding:10px 12px;border-left:3px solid var(--green);"><div style="font-size:0.7rem;font-weight:700;color:var(--green);margin-bottom:3px;">YOUR REPLY · ${d.replied_at?new Date(d.replied_at).toLocaleDateString('en-IN'):''}</div><div style="font-size:0.82rem;color:var(--navy);line-height:1.5;">${d.reply}</div></div>`
+      : `<div style="display:flex;gap:8px;margin-top:8px;"><textarea id="reply-${d.id}" placeholder="Type your reply…" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-family:'Barlow',sans-serif;font-size:0.82rem;resize:vertical;min-height:56px;outline:none;color:var(--navy);"></textarea><button onclick="replyDoubt('${d.id}')" style="align-self:flex-end;padding:9px 18px;background:var(--navy);color:white;border:none;border-radius:8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;white-space:nowrap;">Send Reply</button></div>`}
+    </div>`;
+  }).join('');
+}
+
+async function replyDoubt(doubtId) {
+  const ta = document.getElementById('reply-' + doubtId);
+  const reply = ta ? ta.value.trim() : '';
+  if (!reply) { alert('Please type a reply first.'); return; }
+  const { error } = await sb.from('doubts').update({ reply, replied_by: currentUser.id, replied_at: new Date().toISOString() }).eq('id', doubtId);
+  if (error) { alert('Error: ' + error.message); return; }
+  toast('Reply sent!');
+  await loadDoubtsAdmin();
+  renderDoubtsAdmin();
+}
+
+// -- My Profile (teacher/admin) --
+function renderMyProfile() {
+  if (!adminData) return;
+  const name = adminData.full_name || 'Staff';
+  const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const role = adminData.role === 'teacher' ? 'Teacher' : 'Admin';
+  const el = id => document.getElementById(id);
+  if (el('mp-av')) el('mp-av').textContent = initials;
+  if (el('mp-name')) el('mp-name').textContent = name;
+  if (el('mp-detail')) el('mp-detail').textContent = role + ' · ThinkArk Academy';
+  if (el('mp-tags')) el('mp-tags').innerHTML = [role].map(t=>`<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${t}</span>`).join('');
+  if (el('mp-details-list')) el('mp-details-list').innerHTML = [
+    ['Full Name', name],
+    ['Email', adminData.email || currentUser?.email || '—'],
+    ['Phone', adminData.phone || '—'],
+    ['Role', role],
+    ['Account Status', adminData.is_active ? 'Active' : 'Inactive'],
+    ['Member Since', adminData.created_at ? new Date(adminData.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : '—']
+  ].map(([k,v],i,a)=>`<div style="display:flex;justify-content:space-between;padding:10px 0;${i<a.length-1?'border-bottom:1px solid var(--border);':''}font-size:0.82rem;"><span style="color:var(--muted)">${k}</span><span style="font-weight:600;color:var(--navy)">${v}</span></div>`).join('');
+}
+
 // -- Helpers --
 function timeAgo(dt) {
   const diff=Date.now()-new Date(dt), mins=Math.floor(diff/60000);
@@ -1639,6 +1766,8 @@ function showPage(id, navEl) {
   if (id==='marks'){ renderMarks(); populateMarksStudents(); }
   if (id==='notify-page') renderNotifications();
   if (id==='crm') renderLeads();
+  if (id==='doubts') renderDoubtsAdmin();
+  if (id==='my-profile') renderMyProfile();
 }
 
 // -- Modals --
