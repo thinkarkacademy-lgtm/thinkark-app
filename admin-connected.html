@@ -348,11 +348,11 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
           <option value="Others">Others</option>
         </select>
       </div>
-      <div class="fgroup"><label>Class</label><select id="c-class" onchange="updateSubjectsByClass()"><option value="">All Classes</option><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="competitive">Competitive</option></select></div>
-      <div class="fgroup"><label>Board</label><select id="c-board" onchange="updateSubjectsByClass()"><option value="All">All Boards</option><option value="CBSE">CBSE</option><option value="ICSE">ICSE</option><option value="ISC">ISC</option><option value="Cambridge">Cambridge</option></select></div>
+      <div class="fgroup"><label>Class <span style="color:var(--red)">*</span></label><select id="c-class" onchange="updateSubjectsByClass()"><option value="" disabled selected>Select class…</option><option value="all">All Classes</option><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="competitive">Competitive</option></select></div>
+      <div class="fgroup"><label>Board <span style="color:var(--red)">*</span></label><select id="c-board" onchange="updateSubjectsByClass()"><option value="" disabled selected>Select board…</option><option value="All">All Boards</option><option value="CBSE">CBSE</option><option value="ICSE">ICSE</option><option value="ISC">ISC</option><option value="Cambridge">Cambridge</option></select></div>
     </div>
     <div class="form-row fr2">
-      <div class="fgroup"><label>Subject</label><select id="c-subject"><option value="">Select subject...</option></select></div>
+      <div class="fgroup"><label>Subject <span style="color:var(--red)">*</span></label><select id="c-subject"><option value="" disabled selected>Select subject…</option></select></div>
       <div class="fgroup"><label>Content Type</label><select id="c-type" onchange="toggleUrlField()"><option value="pdf">PDF / Document</option><option value="youtube_link">YouTube Link</option><option value="video_upload">Video File</option><option value="other">Image / Other</option></select></div>
     </div>
 
@@ -628,41 +628,51 @@ function updateSubjectsByClass() {
   if (!sel) return;
 
   const cls = clsEl ? clsEl.value : '';
-  const board = boardEl ? boardEl.value : 'All';
+  const board = boardEl ? boardEl.value : '';
 
-  sel.innerHTML = '<option value="">Select subject...</option>';
+  sel.innerHTML = '<option value="" disabled selected>Select subject…</option>';
 
   if (!cls || !board) return; // require both class and board first
 
   // Subject lists per board
-  const common = ['Mathematics', 'English', 'Hindi'];
   const byBoard = {
-    CBSE: ['Mathematics', 'Science', 'English', 'Hindi', 'Social Studies', 'Sanskrit', 'Computer Science', 'All Subjects'],
-    ICSE: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'History & Civics', 'Geography', 'Computer Applications', 'Environmental Science', 'All Subjects'],
-    ISC: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Economics', 'Commerce', 'Computer Science', 'Psychology', 'All Subjects'],
-    Cambridge: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Geography', 'Economics', 'All Subjects'],
-    All: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Science', 'English', 'Hindi', 'Social Studies', 'History & Civics', 'Geography', 'Computer Science', 'All Subjects']
+    CBSE: ['Mathematics', 'Science', 'English', 'Hindi', 'Social Studies', 'Sanskrit', 'Computer Science'],
+    ICSE: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'History & Civics', 'Geography', 'Computer Applications', 'Environmental Science'],
+    ISC: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Economics', 'Commerce', 'Computer Science', 'Psychology'],
+    Cambridge: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Geography', 'Economics'],
+    All: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Science', 'English', 'Hindi', 'Social Studies', 'History & Civics', 'Geography', 'Computer Science']
   };
 
   // For class 11-12 CBSE, add streams
   const isHigher = cls === '11' || cls === '12';
   let subjects = byBoard[board] || byBoard['All'];
   if (isHigher && board === 'CBSE') {
-    subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Economics', 'Commerce', 'Accountancy', 'Business Studies', 'Computer Science', 'Physical Education', 'All Subjects'];
+    subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Economics', 'Commerce', 'Accountancy', 'Business Studies', 'Computer Science', 'Physical Education'];
+  }
+  // If "All Classes" selected, show union of all subjects
+  if (cls === 'all') {
+    const all = new Set();
+    Object.values(byBoard).forEach(function(list){ list.forEach(function(s){ all.add(s); }); });
+    subjects = Array.from(all).sort();
   }
 
   // Try to match with DB subjects first for correct IDs
   const clsNum = parseInt(cls);
   subjects.forEach(function(name) {
     const opt = document.createElement('option');
-    // Find matching subject from DB
     const match = allSubjects.find(function(s) {
       return s.name === name && (!clsNum || (s.programs && s.programs.class_level === clsNum));
     }) || allSubjects.find(function(s){ return s.name === name; });
-    opt.value = match ? match.id : '';
+    opt.value = match ? match.id : name; // fallback to name if no DB match
     opt.textContent = name;
     sel.appendChild(opt);
   });
+
+  // Always add "Others" as last option
+  const othOpt = document.createElement('option');
+  othOpt.value = 'Others';
+  othOpt.textContent = 'Others';
+  sel.appendChild(othOpt);
 }
 
 async function loadExams() {
@@ -980,18 +990,32 @@ function handleUploadSubmit() {
 
 function buildStoragePath(folder, cls, board, filename) {
   // Structure: {Folder}/{Class or General}/{Board}/{timestamp}_{filename}
-  const clsPart = cls && cls !== 'competitive' ? 'Class-' + cls : (cls === 'competitive' ? 'Competitive' : 'General');
+  const clsPart = !cls || cls === 'all' ? 'General' : (cls === 'competitive' ? 'Competitive' : 'Class-' + cls);
   const boardPart = (board || 'All').replace(/\s+/g, '-');
   const safeName = filename.replace(/\s+/g, '_');
   return folder + '/' + clsPart + '/' + boardPart + '/' + Date.now() + '_' + safeName;
 }
 
+function validateUploadFields() {
+  const cls = (document.getElementById('c-class')||{}).value || '';
+  const board = (document.getElementById('c-board')||{}).value || '';
+  const subjectVal = (document.getElementById('c-subject')||{}).value || '';
+  const errors = [];
+  if (!cls) errors.push('Class is required — please select a class or "All Classes".');
+  if (!board) errors.push('Board is required — please select a board or "All Boards".');
+  if (!subjectVal) errors.push('Subject is required — please select a subject or "Others".');
+  if (errors.length) { alert(errors.join('\n')); return false; }
+  return true;
+}
+
 async function uploadContent() {
+  if (!validateUploadFields()) return;
   const title = (document.getElementById('c-title')||{}).value?.trim();
   const type = (document.getElementById('c-type')||{}).value || 'pdf';
   const folder = (document.getElementById('c-folder')||{}).value || 'Others';
   const cls = (document.getElementById('c-class')||{}).value || '';
-  const subjectId = (document.getElementById('c-subject')||{}).value || null;
+  const subjectEl = document.getElementById('c-subject');
+  const subjectId = subjectEl ? (subjectEl.value && subjectEl.value !== 'Others' ? subjectEl.value : null) : null;
   const board = (document.getElementById('c-board')||{}).value || 'All';
   const desc = (document.getElementById('c-desc')||{}).value?.trim() || '';
   const ytUrl = (document.getElementById('c-url')||{}).value?.trim() || '';
@@ -1041,10 +1065,12 @@ async function uploadContent() {
 
 async function uploadContentBulk() {
   if (!bulkFiles.length) { alert('Please add files to upload.'); return; }
+  if (!validateUploadFields()) return;
   const folder = (document.getElementById('c-folder')||{}).value || 'Others';
   const type = (document.getElementById('c-type')||{}).value || 'pdf';
   const cls = (document.getElementById('c-class')||{}).value || '';
-  const subjectId = (document.getElementById('c-subject')||{}).value || null;
+  const subjectEl = document.getElementById('c-subject');
+  const subjectId = subjectEl ? (subjectEl.value && subjectEl.value !== 'Others' ? subjectEl.value : null) : null;
   const board = (document.getElementById('c-board')||{}).value || 'All';
   const isAdmin = adminData && adminData.role === 'admin';
   const submitBtn = document.getElementById('c-submit-btn');
@@ -1628,7 +1654,7 @@ function openModal(id) {
     // Reset form
     ['c-title','c-desc','c-url'].forEach(function(i){ const el=document.getElementById(i); if(el) el.value=''; });
     const cls = document.getElementById('c-class'); if(cls) cls.value='';
-    const brd = document.getElementById('c-board'); if(brd) brd.value='All';
+    const brd = document.getElementById('c-board'); if(brd) brd.value='';
     const typ = document.getElementById('c-type'); if(typ) typ.value='pdf';
     const fld = document.getElementById('c-folder'); if(fld) fld.value='Question Bank';
     contentFile = null;

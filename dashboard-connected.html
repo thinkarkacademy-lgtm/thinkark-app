@@ -419,7 +419,17 @@ async function loadStudentData() {
 }
 
 async function loadContent() {
-  const { data } = await sb.from('content').select('*, subjects(name)').eq('is_published', true).order('created_at', { ascending: false });
+  // Filter content by student's class and board
+  // Show content that matches student's class OR is "All Classes" (null class_level)
+  // AND matches student's board OR is "All Boards"
+  const cls = studentData?.current_class;
+  const board = studentData?.primary_board;
+  let query = sb.from('content').select('*, subjects(name)').eq('is_published', true);
+  // class filter: show if class_level is null (all classes) OR matches student's class
+  if (cls) query = query.or(`class_level.is.null,class_level.eq.${cls}`);
+  // board filter: show if board is null OR 'All' OR matches student's board
+  if (board) query = query.or(`board.is.null,board.eq.All,board.eq.${board}`);
+  const { data } = await query.order('created_at', { ascending: false });
   allContent = data || [];
 }
 
@@ -732,10 +742,12 @@ function renderProfile() {
   document.getElementById('prof-name').textContent = name;
   const programs = studentData.enrollments?.map(e=>e.programs?.name).filter(Boolean) || [];
   const board = studentData.primary_board || '—';
-  document.getElementById('prof-detail').textContent = `${programs.length ? programs.join(' + ') + ' · ' : ''}${board} · ThinkArk Academy`;
-  document.getElementById('prof-tags').innerHTML = [studentData.primary_board, ...programs].map(t=>`<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${t}</span>`).join('');
+  const classLabel = studentData.current_class ? 'Class ' + studentData.current_class : null;
+  document.getElementById('prof-detail').textContent = `${classLabel ? classLabel + ' · ' : ''}${board} · ThinkArk Academy`;
+  document.getElementById('prof-tags').innerHTML = [classLabel, studentData.primary_board, ...programs].filter(Boolean).map(t=>`<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${t}</span>`).join('');
   document.getElementById('prof-details-list').innerHTML = [
-    ['Full Name', name], ['Email', studentData.email], ['Board', studentData.primary_board],
+    ['Full Name', name], ['Email', studentData.email], ['Class', classLabel || '—'],
+    ['Board', studentData.primary_board || '—'],
     ['Parent Name', studentData.parent_name||'—'], ['Parent Phone', studentData.parent_phone||'—'],
     ['Admission Date', studentData.admission_date ? new Date(studentData.admission_date).toLocaleDateString('en-IN') : '—']
   ].map(([k,v],i,a)=>`<div style="display:flex;justify-content:space-between;padding:10px 0;${i<a.length-1?'border-bottom:1px solid var(--border);':''}font-size:0.82rem;"><span style="color:var(--muted)">${k}</span><span style="font-weight:600">${v}</span></div>`).join('');
