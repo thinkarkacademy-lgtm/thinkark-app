@@ -141,7 +141,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
   <div class="nav-grp">
     <div class="nav-grp-label">Students</div>
     <div class="nav-item" onclick="showPage('students',this)"><span class="ni">👥</span> Students</div>
-    <div class="nav-item" onclick="showPage('attendance',this)"><span class="ni">✅</span> Attendance</div>
+    <div class="nav-item admin-only-nav" onclick="showPage('attendance',this)"><span class="ni">✅</span> Attendance</div>
     <div class="nav-item" onclick="showPage('marks',this)"><span class="ni">📊</span> Marks & Results</div>
   </div>
   <div class="nav-grp">
@@ -196,7 +196,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
 <div class="page" id="page-students">
   <div class="ph">
     <div><div class="pt">Students</div><div class="ps" id="students-sub">Loading…</div></div>
-    <button class="btn btn-primary" onclick="openModal('modal-add-student')">+ Add Student</button>
+    <button class="btn btn-primary admin-only-nav" onclick="openModal('modal-add-student')">+ Add Student</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th style="padding-left:20px">Student</th><th>Programs</th><th>Board</th><th>Parent Phone</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="students-tbody"><tr><td colspan="6"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
 </div>
@@ -244,9 +244,27 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div><div class="pt">Notes & Content</div><div class="ps" id="content-sub">Loading…</div></div>
     <button class="btn btn-primary" onclick="openModal('modal-upload')">+ Upload Content</button>
   </div>
-  <div style="display:flex;gap:4px;background:var(--cream-mid);border-radius:10px;padding:4px;margin-bottom:16px;width:fit-content">
-    <button id="tab-published" onclick="switchContentTab('published')" style="padding:7px 18px;border-radius:7px;border:none;font-family:Barlow,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;background:white;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,0.1)">Published</button>
-    <button id="tab-pending" onclick="switchContentTab('pending')" style="padding:7px 18px;border-radius:7px;border:none;font-family:Barlow,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;background:none;color:var(--muted)">Pending <span id="pending-count" style="background:var(--gold);color:var(--navy);border-radius:10px;padding:1px 7px;font-size:0.65rem;margin-left:4px;font-weight:800"></span></button>
+  <div style="display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+    <div style="display:flex;gap:4px;background:var(--cream-mid);border-radius:10px;padding:4px;">
+      <button id="tab-published" onclick="switchContentTab('published')" style="padding:7px 18px;border-radius:7px;border:none;font-family:Barlow,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;background:white;color:var(--navy);box-shadow:0 1px 4px rgba(0,0,0,0.1)">Published</button>
+      <button id="tab-pending" onclick="switchContentTab('pending')" style="padding:7px 18px;border-radius:7px;border:none;font-family:Barlow,sans-serif;font-size:0.82rem;font-weight:700;cursor:pointer;background:none;color:var(--muted)">Pending <span id="pending-count" style="background:var(--gold);color:var(--navy);border-radius:10px;padding:1px 7px;font-size:0.65rem;margin-left:4px;font-weight:800"></span></button>
+    </div>
+    <select id="cf-class" onchange="renderContent()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.82rem;color:var(--navy);background:white;outline:none;">
+      <option value="">All Classes</option>
+      <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
+      <option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option>
+    </select>
+    <select id="cf-subject" onchange="renderContent()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.82rem;color:var(--navy);background:white;outline:none;">
+      <option value="">All Subjects</option>
+    </select>
+    <select id="cf-folder" onchange="renderContent()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.82rem;color:var(--navy);background:white;outline:none;">
+      <option value="">All Folders</option>
+      <option value="Question Bank">Question Bank</option>
+      <option value="Practice Test">Practice Test</option>
+      <option value="Student Notes">Student Notes</option>
+      <option value="Others">Others</option>
+    </select>
+    <button onclick="clearContentFilters()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.78rem;font-weight:700;color:var(--muted);background:white;cursor:pointer;">✕ Clear</button>
   </div>
   <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th style="padding-left:20px">Title</th><th>Folder</th><th>Subject</th><th>Class</th><th>Board</th><th>Uploaded By</th><th>Date</th><th>Actions</th></tr></thead><tbody id="content-tbody"><tr><td colspan="8"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
 </div>
@@ -596,6 +614,11 @@ async function init() {
   if (!user || (user.role !== 'admin' && user.role !== 'teacher')) { window.location.href='login-connected.html'; return; }
   adminData = user;
   const isTeacher = user.role === 'teacher';
+  // Load teacher profile data if teacher
+  if (isTeacher) {
+    const { data: td } = await sb.from('teachers').select('*').eq('user_id', currentUser.id).single();
+    if (td) adminData._teacherData = td;
+  }
   const name = user.full_name || (isTeacher ? 'Teacher' : 'Admin');
   const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
   document.getElementById('admin-name').textContent = name;
@@ -641,6 +664,7 @@ async function loadContent() {
   if (badge) badge.textContent = pending.length || '';
   const sub = document.getElementById('content-sub');
   if (sub) sub.textContent = allContent.filter(function(c){return c.is_published;}).length + ' published · ' + pending.length + ' pending';
+  populateContentSubjectFilter();
 }
 async function loadSubjects() {
   const { data } = await sb.from('subjects').select('*, programs(class_level)').order('name');
@@ -792,11 +816,13 @@ function renderStudents() {
     const joined = s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN') : '-';
     const tr = document.createElement('tr');
     tr.innerHTML = '<td style="padding-left:20px;font-weight:700">'+name+'</td><td>'+prog+'</td><td>'+board+'</td><td>'+phone+'</td><td style="color:var(--muted);font-size:0.82rem">'+joined+'</td><td></td>';
-    const delBtn = document.createElement('button');
-    delBtn.textContent = 'Remove';
-    delBtn.style.cssText = 'padding:3px 8px;background:rgba(224,82,82,0.08);color:var(--red);border:1px solid rgba(224,82,82,0.2);border-radius:6px;font-size:0.7rem;cursor:pointer';
-    delBtn.onclick = function() { deleteStudent(s.id); };
-    tr.lastElementChild.appendChild(delBtn);
+    if (adminData && adminData.role === 'admin') {
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'Remove';
+      delBtn.style.cssText = 'padding:3px 8px;background:rgba(224,82,82,0.08);color:var(--red);border:1px solid rgba(224,82,82,0.2);border-radius:6px;font-size:0.7rem;cursor:pointer';
+      delBtn.onclick = function() { deleteStudent(s.id); };
+      tr.lastElementChild.appendChild(delBtn);
+    }
     tbody.appendChild(tr);
   });
 }
@@ -869,9 +895,19 @@ function renderContent() {
   if (!tbody) return;
   const isAdmin = adminData && adminData.role === 'admin';
   const showPending = contentTab === 'pending';
+  const cfClass = (document.getElementById('cf-class')||{}).value || '';
+  const cfSubject = (document.getElementById('cf-subject')||{}).value || '';
+  const cfFolder = (document.getElementById('cf-folder')||{}).value || '';
   const filtered = allContent.filter(function(c) {
-    if (showPending) return !c.is_published && (isAdmin || c.uploaded_by === currentUser.id);
-    return c.is_published;
+    if (showPending) {
+      if (!(!c.is_published && (isAdmin || c.uploaded_by === currentUser.id))) return false;
+    } else {
+      if (!c.is_published) return false;
+    }
+    if (cfClass && String(c.class_level||'') !== cfClass) return false;
+    if (cfSubject && (c.subjects ? c.subjects.name : '') !== cfSubject) return false;
+    if (cfFolder && (c.folder||'') !== cfFolder) return false;
+    return true;
   });
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">'+(showPending?'No pending submissions.':'No content uploaded yet.')+'</td></tr>';
@@ -911,6 +947,25 @@ function renderContent() {
     }
     tbody.appendChild(tr);
   });
+}
+
+function clearContentFilters() {
+  const cf = document.getElementById('cf-class'); if (cf) cf.value = '';
+  const cs = document.getElementById('cf-subject'); if (cs) cs.value = '';
+  const cff = document.getElementById('cf-folder'); if (cff) cff.value = '';
+  renderContent();
+}
+
+function populateContentSubjectFilter() {
+  const sel = document.getElementById('cf-subject');
+  if (!sel) return;
+  const seen = new Set();
+  const subjects = allContent.map(c => c.subjects ? c.subjects.name : null).filter(Boolean).filter(n => {
+    if (seen.has(n)) return false; seen.add(n); return true;
+  }).sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Subjects</option>' + subjects.map(s => '<option value="'+s+'">'+(s)+'</option>').join('');
+  if (cur) sel.value = cur;
 }
 
 let contentFile = null;
@@ -1723,20 +1778,41 @@ function renderMyProfile() {
   if (!adminData) return;
   const name = adminData.full_name || 'Staff';
   const initials = name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-  const role = adminData.role === 'teacher' ? 'Teacher' : 'Admin';
+  const isTeacher = adminData.role === 'teacher';
+  const role = isTeacher ? 'Teacher' : 'Admin';
+  const td = adminData._teacherData;
   const el = id => document.getElementById(id);
   if (el('mp-av')) el('mp-av').textContent = initials;
   if (el('mp-name')) el('mp-name').textContent = name;
   if (el('mp-detail')) el('mp-detail').textContent = role + ' · ThinkArk Academy';
-  if (el('mp-tags')) el('mp-tags').innerHTML = [role].map(t=>`<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${t}</span>`).join('');
-  if (el('mp-details-list')) el('mp-details-list').innerHTML = [
+
+  // Build tags: role + subjects
+  const tags = [role];
+  if (isTeacher && td && td.subjects && td.subjects.length) {
+    td.subjects.forEach(function(s){ tags.push(s); });
+  }
+  const tagStyle = 'font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:\'Barlow Condensed\',sans-serif;letter-spacing:0.5px;';
+  if (el('mp-tags')) el('mp-tags').innerHTML = tags.map((t,i)=>`<span style="${tagStyle}background:${i===0?'rgba(201,168,76,0.15)':'rgba(26,46,90,0.08)'};color:${i===0?'var(--gold)':'var(--navy)'};">${t}</span>`).join('');
+
+  // Build detail rows
+  const rows = [
     ['Full Name', name],
     ['Email', adminData.email || currentUser?.email || '—'],
     ['Phone', adminData.phone || '—'],
     ['Role', role],
-    ['Account Status', adminData.is_active ? 'Active' : 'Inactive'],
-    ['Member Since', adminData.created_at ? new Date(adminData.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : '—']
-  ].map(([k,v],i,a)=>`<div style="display:flex;justify-content:space-between;padding:10px 0;${i<a.length-1?'border-bottom:1px solid var(--border);':''}font-size:0.82rem;"><span style="color:var(--muted)">${k}</span><span style="font-weight:600;color:var(--navy)">${v}</span></div>`).join('');
+  ];
+  if (isTeacher && td) {
+    const classes = (td.class_levels && td.class_levels.length)
+      ? td.class_levels.sort((a,b)=>a-b).map(c=>'Class '+c).join(', ')
+      : '—';
+    const subjects = (td.subjects && td.subjects.length) ? td.subjects.join(', ') : '—';
+    rows.push(['Mapped Classes', classes]);
+    rows.push(['Subjects Taught', subjects]);
+  }
+  rows.push(['Account Status', adminData.is_active !== false ? 'Active' : 'Inactive']);
+  rows.push(['Member Since', adminData.created_at ? new Date(adminData.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : '—']);
+
+  if (el('mp-details-list')) el('mp-details-list').innerHTML = rows.map(([k,v],i,a)=>`<div style="display:flex;justify-content:space-between;padding:10px 0;${i<a.length-1?'border-bottom:1px solid var(--border);':''}font-size:0.82rem;"><span style="color:var(--muted)">${k}</span><span style="font-weight:600;color:var(--navy);text-align:right;max-width:60%">${v}</span></div>`).join('');
 }
 
 // -- Helpers --
