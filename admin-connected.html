@@ -1087,12 +1087,52 @@ function handleBulkDrop(e) {
   handleBulkFiles(e.dataTransfer.files);
 }
 
+function getExistingFilenames() {
+  // Build a set of normalised filenames already in the content library
+  const names = new Set();
+  (allContent || []).forEach(function(c) {
+    if (c.file_url) {
+      // Extract the original filename from the storage path (after timestamp_ prefix)
+      const raw = decodeURIComponent(c.file_url.split('/').pop().split('?')[0]);
+      const withoutTs = raw.replace(/^\d+_/, '');          // strip leading timestamp_
+      names.add(withoutTs.toLowerCase());
+      names.add(raw.toLowerCase());                         // also match exact path segment
+    }
+    // Also match by title (derived name used in bulk upload)
+    if (c.title) names.add(c.title.trim().toLowerCase());
+  });
+  return names;
+}
+
+function checkDuplicates(files) {
+  const existing = getExistingFilenames();
+  const dupes = [], fresh = [];
+  files.forEach(function(f) {
+    const nameNoExt = f.name.replace(/\.[^/.]+$/, '').replace(/[-_]/g, ' ').toLowerCase();
+    const nameFull = f.name.toLowerCase();
+    if (existing.has(nameFull) || existing.has(nameNoExt)) {
+      dupes.push(f);
+    } else {
+      fresh.push(f);
+    }
+  });
+  return { dupes, fresh };
+}
+
 function handleBulkFiles(fileList) {
-  const newFiles = Array.from(fileList).filter(function(f) {
+  const sizeOk = Array.from(fileList).filter(function(f) {
     if (f.size > MAX_FILE_SIZE) { alert(f.name + ' exceeds 50 MB and was skipped.'); return false; }
     return true;
   });
-  bulkFiles = bulkFiles.concat(newFiles).slice(0, 20); // cap at 20
+  const { dupes, fresh } = checkDuplicates(sizeOk);
+  if (dupes.length) {
+    const msg = dupes.length + ' file' + (dupes.length !== 1 ? 's are' : ' is') + ' already in the library and will be skipped:\n'
+      + dupes.map(function(f){ return '  • ' + f.name; }).join('\n')
+      + (fresh.length ? '\n\n' + fresh.length + ' new file' + (fresh.length !== 1 ? 's' : '') + ' will be added.' : '\n\nNo new files to add.');
+    alert(msg);
+  }
+  if (!fresh.length) return;
+  bulkFiles = bulkFiles.concat(fresh).slice(0, 20); // cap at 20
   renderBulkList();
 }
 
@@ -1155,6 +1195,14 @@ async function uploadContent() {
   const ytUrl = (document.getElementById('c-url')||{}).value?.trim() || '';
   if (!title) { alert('Please enter a title.'); return; }
   if (type !== 'youtube_link' && !contentFile) { alert('Please select a file to upload.'); return; }
+  // Duplicate check for single file
+  if (contentFile) {
+    const { dupes } = checkDuplicates([contentFile]);
+    if (dupes.length) {
+      const proceed = confirm('"' + contentFile.name + '" already exists in the library.\n\nUpload anyway?');
+      if (!proceed) return;
+    }
+  }
   const isAdmin = adminData && adminData.role === 'admin';
   const submitBtn = document.getElementById('c-submit-btn');
   if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Uploading...'; }
@@ -1214,11 +1262,20 @@ async function uploadContentBulk() {
   const bar = document.getElementById('bulk-progress-bar');
   const lbl = document.getElementById('bulk-progress-label');
   if (prog) prog.style.display = 'block';
-  let done = 0, failed = [];
-  for (let i = 0; i < bulkFiles.length; i++) {
-    const file = bulkFiles[i];
-    if (lbl) lbl.textContent = 'Uploading ' + (i+1) + ' / ' + bulkFiles.length + ': ' + file.name;
-    if (bar) bar.style.width = Math.round((i / bulkFiles.length) * 90) + '%';
+  // Re-check duplicates at upload time (content may have changed since files were picked)
+  const { dupes: stillDupes, fresh: toUpload } = checkDuplicates(bulkFiles);
+  if (stillDupes.length && !toUpload.length) {
+    alert('All selected files already exist in the library. Nothing to upload.');
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Upload All & Publish'; }
+    if (prog) prog.style.display = 'none';
+    return;
+  }
+  const filesToUpload = toUpload.length < bulkFiles.length ? toUpload : bulkFiles;
+  let done = 0, skipped = stillDupes.length, failed = [];
+  for (let i = 0; i < filesToUpload.length; i++) {
+    const file = filesToUpload[i];
+    if (lbl) lbl.textContent = 'Uploading ' + (i+1) + ' / ' + filesToUpload.length + ': ' + file.name;
+    if (bar) bar.style.width = Math.round((i / filesToUpload.length) * 90) + '%';
     const path = buildStoragePath(folder, cls, board, file.name);
     const { error: upErr } = await sb.storage.from('notes').upload(path, file, { upsert: true });
     if (upErr) { failed.push(file.name + ' (' + upErr.message + ')'); continue; }
@@ -1238,8 +1295,9 @@ async function uploadContentBulk() {
   if (bar) bar.style.width = '100%';
   setTimeout(function(){ if(prog)prog.style.display='none'; if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Upload All & Publish';} }, 600);
   if (failed.length) alert('Some files failed:\n' + failed.join('\n'));
+  const skipNote = skipped > 0 ? ' · ' + skipped + ' duplicate' + (skipped!==1?'s':'')+' skipped' : '';
   if (done > 0) {
-    toast(done + ' file' + (done!==1?'s':'') + ' uploaded' + (isAdmin?' and published':' — pending approval') + '!');
+    toast(done + ' file' + (done!==1?'s':'') + ' uploaded' + (isAdmin?' and published':' — pending approval') + skipNote + '!');
     if (isAdmin) {
       const bulkNotifClass = cls && cls !== 'all' && cls !== 'competitive' ? parseInt(cls) : null;
       await sb.from('notifications').insert({ title: done + ' new files in ' + folder, body: 'New content added' + (cls && cls !== 'all' ? ' for Class ' + cls : '') + '. Check your Notes tab.', target: 'all', class_level: bulkNotifClass, sent_by: currentUser.id });
