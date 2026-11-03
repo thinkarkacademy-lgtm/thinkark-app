@@ -108,12 +108,36 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
 .toast.show{transform:translateY(0);opacity:1;}
 .toast.success{background:var(--green);}
 .toast.error{background:var(--red);}
+/* Hamburger — hidden on desktop */
+.ham-btn{display:none;background:none;border:none;cursor:pointer;padding:6px 8px;color:var(--navy);font-size:1.3rem;line-height:1;margin-right:6px;}
+/* Sidebar backdrop (mobile) */
+.sb-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:199;}
+.sb-backdrop.active{display:block;}
+/* Mobile layout */
+@media(max-width:768px){
+  :root{--sidebar-w:260px;}
+  .ham-btn{display:flex;align-items:center;justify-content:center;}
+  .sidebar{transform:translateX(-100%);transition:transform 0.25s ease;z-index:200;}
+  .sidebar.open{transform:translateX(0);}
+  .topbar{left:0;}
+  .main{margin-left:0;}
+  .page{padding:18px 16px;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .two-col,.col6040{grid-template-columns:1fr;}
+  .fr2,.fr3{grid-template-columns:1fr;}
+  .ph{flex-wrap:wrap;gap:10px;}
+}
+@media(max-width:480px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .page{padding:14px 12px;}
+}
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body>
 
 <div class="toast" id="toast"></div>
+<div class="sb-backdrop" id="sb-backdrop" onclick="closeSidebar()"></div>
 
 <!-- SIDEBAR -->
 <div class="sidebar">
@@ -165,6 +189,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
 
 <!-- TOPBAR -->
 <div class="topbar">
+  <button class="ham-btn" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
   <div class="tb-title" id="tbTitle">Dashboard</div>
   <div class="tb-right">
     <div class="admin-av" id="top-av">—</div>
@@ -599,6 +624,18 @@ let leadFilter = null, qCount = 1;
 const pageTitles = { dashboard:'Dashboard', students:'Students', attendance:'Attendance', marks:'Marks & Results', content:'Notes & Content', exams:'Exam Manager', 'notify-page':'Notifications', crm:'Lead CRM', doubts:'Student Doubts', 'my-profile':'My Profile' };
 
 // -- Toast --
+// -- Mobile sidebar --
+function toggleSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('sb-backdrop');
+  const open = sb.classList.toggle('open');
+  bd.classList.toggle('active', open);
+}
+function closeSidebar() {
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('sb-backdrop').classList.remove('active');
+}
+
 function toast(msg, type='success') {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = `toast ${type} show`;
@@ -1830,6 +1867,8 @@ function showPage(id, navEl) {
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if (navEl) navEl.classList.add('active');
+  // Auto-close sidebar on mobile after nav tap
+  if (window.innerWidth <= 768) closeSidebar();
   document.getElementById('tbTitle').textContent = pageTitles[id]||id;
   window.scrollTo(0,0);
   if (id==='students') renderStudents();
