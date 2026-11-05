@@ -468,6 +468,12 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
         <div style="font-size:0.75rem;color:var(--muted);margin-bottom:5px" id="bulk-progress-label">Uploading 0 / 0...</div>
         <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div id="bulk-progress-bar" style="height:100%;background:var(--green);width:0%;transition:width 0.3s;border-radius:3px"></div></div>
       </div>
+      <!-- Upload result summary -->
+      <div id="bulk-summary" style="display:none;border-radius:10px;overflow:hidden;margin-bottom:4px;border:1px solid var(--border)">
+        <div id="bulk-summary-uploaded" style="display:none;padding:10px 14px;background:rgba(42,157,110,0.07)"></div>
+        <div id="bulk-summary-skipped" style="display:none;padding:10px 14px;background:rgba(224,120,50,0.06);border-top:1px solid var(--border)"></div>
+        <div id="bulk-summary-failed" style="display:none;padding:10px 14px;background:rgba(224,82,82,0.06);border-top:1px solid var(--border)"></div>
+      </div>
     </div>
 
     <div class="modal-footer">
@@ -1293,19 +1299,53 @@ async function uploadContentBulk() {
     done++;
   }
   if (bar) bar.style.width = '100%';
-  setTimeout(function(){ if(prog)prog.style.display='none'; if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Upload All & Publish';} }, 600);
-  if (failed.length) alert('Some files failed:\n' + failed.join('\n'));
-  const skipNote = skipped > 0 ? ' · ' + skipped + ' duplicate' + (skipped!==1?'s':'')+' skipped' : '';
+  setTimeout(function(){ if(prog)prog.style.display='none'; }, 400);
+  if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Upload All & Publish'; }
+
+  // Show inline summary
+  const summary = document.getElementById('bulk-summary');
+  const sumUp = document.getElementById('bulk-summary-uploaded');
+  const sumSk = document.getElementById('bulk-summary-skipped');
+  const sumFl = document.getElementById('bulk-summary-failed');
+  if (summary) {
+    const fileIcon = '<span style="font-size:0.75rem">📄</span>';
+    if (done > 0 && sumUp) {
+      sumUp.style.display = 'block';
+      sumUp.innerHTML = '<div style="font-size:0.72rem;font-weight:800;color:var(--green);letter-spacing:0.5px;margin-bottom:5px">✅ ' + done + ' FILE' + (done!==1?'S':'') + ' UPLOADED</div>'
+        + filesToUpload.filter(function(_,i){ return i < done + failed.length; })
+            .filter(function(f){ return !failed.some(function(e){ return e.startsWith(f.name); }); })
+            .map(function(f){ return '<div style="font-size:0.78rem;padding:2px 0;color:var(--navy)">' + fileIcon + ' ' + f.name + '</div>'; }).join('');
+    } else if (sumUp) { sumUp.style.display = 'none'; }
+
+    if (stillDupes.length > 0 && sumSk) {
+      sumSk.style.display = 'block';
+      sumSk.innerHTML = '<div style="font-size:0.72rem;font-weight:800;color:var(--orange);letter-spacing:0.5px;margin-bottom:5px">⏭ ' + stillDupes.length + ' DUPLICATE' + (stillDupes.length!==1?'S':'') + ' SKIPPED</div>'
+        + stillDupes.map(function(f){ return '<div style="font-size:0.78rem;padding:2px 0;color:var(--muted)">' + fileIcon + ' ' + f.name + '</div>'; }).join('');
+    } else if (sumSk) { sumSk.style.display = 'none'; }
+
+    if (failed.length > 0 && sumFl) {
+      sumFl.style.display = 'block';
+      sumFl.innerHTML = '<div style="font-size:0.72rem;font-weight:800;color:var(--red);letter-spacing:0.5px;margin-bottom:5px">❌ ' + failed.length + ' FAILED</div>'
+        + failed.map(function(e){ return '<div style="font-size:0.78rem;padding:2px 0;color:var(--muted)">' + fileIcon + ' ' + e + '</div>'; }).join('');
+    } else if (sumFl) { sumFl.style.display = 'none'; }
+
+    summary.style.display = (done > 0 || stillDupes.length > 0 || failed.length > 0) ? 'block' : 'none';
+  }
+
   if (done > 0) {
+    const skipNote = stillDupes.length > 0 ? ' · ' + stillDupes.length + ' duplicate' + (stillDupes.length!==1?'s':'') + ' skipped' : '';
     toast(done + ' file' + (done!==1?'s':'') + ' uploaded' + (isAdmin?' and published':' — pending approval') + skipNote + '!');
     if (isAdmin) {
       const bulkNotifClass = cls && cls !== 'all' && cls !== 'competitive' ? parseInt(cls) : null;
       await sb.from('notifications').insert({ title: done + ' new files in ' + folder, body: 'New content added' + (cls && cls !== 'all' ? ' for Class ' + cls : '') + '. Check your Notes tab.', target: 'all', class_level: bulkNotifClass, sent_by: currentUser.id });
     }
+  } else if (stillDupes.length > 0) {
+    toast('All files already exist — nothing uploaded.', 'error');
   }
+
   bulkFiles = [];
   renderBulkList();
-  closeModal('modal-upload');
+  // Don't auto-close — let user see the summary; they close manually
   await loadContent(); renderContent();
 }
 
@@ -1967,6 +2007,7 @@ function openModal(id) {
     renderBulkList();
     const prog = document.getElementById('c-progress'); if(prog) prog.style.display='none';
     const bprog = document.getElementById('bulk-progress'); if(bprog) bprog.style.display='none';
+    const bsum = document.getElementById('bulk-summary'); if(bsum) bsum.style.display='none';
     setUploadMode('single');
     toggleUrlField();
     updateSubjectsByClass();
