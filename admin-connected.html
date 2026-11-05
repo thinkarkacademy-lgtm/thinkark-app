@@ -340,10 +340,27 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
 <!-- DOUBTS -->
 <div class="page" id="page-doubts">
   <div class="ph"><div><div class="pt">Student Doubts</div><div class="ps" id="doubts-admin-sub">Loading…</div></div></div>
-  <div class="chip-bar">
+  <!-- Status chips -->
+  <div class="chip-bar" style="margin-bottom:10px;">
     <div class="chip active" onclick="filterDoubtsAdmin('all',this)">All</div>
     <div class="chip" onclick="filterDoubtsAdmin('pending',this)">⏳ Pending</div>
     <div class="chip" onclick="filterDoubtsAdmin('replied',this)">✅ Replied</div>
+  </div>
+  <!-- Filters row -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+    <select id="df-class" onchange="renderDoubtsAdmin()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:white;color:var(--navy);">
+      <option value="">All Classes</option>
+      <option value="7">Class 7</option><option value="8">Class 8</option>
+      <option value="9">Class 9</option><option value="10">Class 10</option>
+      <option value="11">Class 11</option><option value="12">Class 12</option>
+    </select>
+    <select id="df-subject" onchange="renderDoubtsAdmin()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:white;color:var(--navy);">
+      <option value="">All Subjects</option>
+    </select>
+    <select id="df-teacher" onchange="renderDoubtsAdmin()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:white;color:var(--navy);">
+      <option value="">All Teachers</option>
+    </select>
+    <button onclick="clearDoubtFilters()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:white;color:var(--muted);cursor:pointer;">✕ Clear</button>
   </div>
   <div id="doubts-admin-list"><div class="skeleton" style="height:120px;border-radius:8px;margin-bottom:12px;"></div><div class="skeleton" style="height:120px;border-radius:8px;"></div></div>
 </div>
@@ -1567,9 +1584,13 @@ async function uploadContent() {
   setTimeout(function(){ const p=document.getElementById('c-progress'); if(p)p.style.display='none'; if(submitBtn){submitBtn.disabled=false;submitBtn.textContent='Upload & Publish';} }, 600);
   toast(isAdmin ? 'Content published!' : 'Uploaded — pending admin approval.');
   if (isAdmin) {
-    const notifTitle = 'New ' + (type === 'youtube_link' ? 'Video' : folder) + ' Added';
-    const notifBody = title + (cls && cls !== 'all' && cls !== 'competitive' ? ' for Class ' + cls : '') + ' has been uploaded. Check your Notes tab.';
     const notifClass = cls && cls !== 'all' && cls !== 'competitive' ? parseInt(cls) : null;
+    const catLabel = type === 'youtube_link' ? 'Video' : folder;
+    const clsLabel = notifClass ? ' for Class ' + cls : '';
+    const notifTitle = 'New ' + catLabel + clsLabel;
+    const subjectName = allSubjects.find(function(s){ return s.id === subjectId; });
+    const subLabel = subjectName ? ' · ' + subjectName.name : '';
+    const notifBody = '"' + title + '"' + subLabel + clsLabel + ' has been added. Check your Notes tab.';
     await sb.from('notifications').insert({ title: notifTitle, body: notifBody, target: 'all', class_level: notifClass, sent_by: currentUser.id });
   }
   clearContentFile();
@@ -1662,7 +1683,10 @@ async function uploadContentBulk() {
     toast(done + ' file' + (done!==1?'s':'') + ' uploaded' + (isAdmin?' and published':' — pending approval') + skipNote + '!');
     if (isAdmin) {
       const bulkNotifClass = cls && cls !== 'all' && cls !== 'competitive' ? parseInt(cls) : null;
-      await sb.from('notifications').insert({ title: done + ' new files in ' + folder, body: 'New content added' + (cls && cls !== 'all' ? ' for Class ' + cls : '') + '. Check your Notes tab.', target: 'all', class_level: bulkNotifClass, sent_by: currentUser.id });
+      const clsLabel = bulkNotifClass ? ' for Class ' + cls : '';
+      const bulkTitle = done + ' new ' + folder + (done !== 1 ? 's' : '') + clsLabel;
+      const bulkBody = done + ' ' + folder + ' file' + (done !== 1 ? 's' : '') + ' added' + clsLabel + '. Check your Notes tab.';
+      await sb.from('notifications').insert({ title: bulkTitle, body: bulkBody, target: 'all', class_level: bulkNotifClass, sent_by: currentUser.id });
     }
   } else if (stillDupes.length > 0) {
     toast('All files already exist — nothing uploaded.', 'error');
@@ -2172,13 +2196,68 @@ async function deleteLead(id) {
 // -- Doubts (admin/teacher view) --
 async function loadDoubtsAdmin() {
   const isTeacher = adminData && adminData.role === 'teacher';
-  let query = sb.from('doubts').select('*, students(id, current_class, users(full_name, email))').order('created_at', { ascending: false });
-  // Teachers see doubts for all students (subject filtering can be added later when teacher-subject mapping exists)
+  // Fetch doubts with student + teacher data
+  let query = sb.from('doubts')
+    .select('*, students(id, current_class, users(full_name, email)), teachers(id, full_name, subjects)')
+    .order('created_at', { ascending: false });
+  // Teachers only see doubts assigned to them or matching their subjects
+  if (isTeacher && adminData._teacherData) {
+    const td = adminData._teacherData;
+    query = query.or('teacher_id.eq.' + td.id + (td.subjects && td.subjects.length ? ',subject.in.(' + td.subjects.map(s => '"' + s + '"').join(',') + ')' : ''));
+  }
   const { data } = await query;
   allDoubtsAdmin = data || [];
   const pending = allDoubtsAdmin.filter(d => !d.reply).length;
   const badge = document.getElementById('nb-doubts');
   if (badge) badge.textContent = pending || '';
+  populateDoubtFilters();
+}
+
+function populateDoubtFilters() {
+  const isTeacher = adminData && adminData.role === 'teacher';
+  // Subject dropdown — built from actual doubts data
+  const subSel = document.getElementById('df-subject');
+  const tchSel = document.getElementById('df-teacher');
+  if (!subSel || !tchSel) return;
+  const subjects = [...new Set(allDoubtsAdmin.map(d => d.subject).filter(Boolean))].sort();
+  const curSub = subSel.value;
+  subSel.innerHTML = '<option value="">All Subjects</option>';
+  subjects.forEach(function(s) {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    if (s === curSub) opt.selected = true;
+    subSel.appendChild(opt);
+  });
+  // Teacher dropdown — built from doubts that have a teacher assigned
+  const teachers = {};
+  allDoubtsAdmin.forEach(function(d) {
+    if (d.teacher_id && d.teachers) teachers[d.teacher_id] = d.teachers.full_name;
+  });
+  const curTch = tchSel.value;
+  tchSel.innerHTML = '<option value="">All Teachers</option>';
+  Object.entries(teachers).sort((a,b) => a[1].localeCompare(b[1])).forEach(function([id, name]) {
+    const opt = document.createElement('option');
+    opt.value = id; opt.textContent = name;
+    if (id === curTch) opt.selected = true;
+    tchSel.appendChild(opt);
+  });
+  // For teachers: pre-select their own subject if only one
+  if (isTeacher && adminData._teacherData) {
+    const td = adminData._teacherData;
+    if (td.subjects && td.subjects.length === 1 && !curSub) {
+      subSel.value = td.subjects[0];
+    }
+  }
+}
+
+function clearDoubtFilters() {
+  const dfClass = document.getElementById('df-class');
+  const dfSub = document.getElementById('df-subject');
+  const dfTch = document.getElementById('df-teacher');
+  if (dfClass) dfClass.value = '';
+  if (dfSub) dfSub.value = '';
+  if (dfTch) dfTch.value = '';
+  renderDoubtsAdmin();
 }
 
 let doubtsAdminFilter = 'all';
@@ -2192,9 +2271,15 @@ function filterDoubtsAdmin(type, btn) {
 function renderDoubtsAdmin() {
   const el = document.getElementById('doubts-admin-list');
   if (!el) return;
+  const dfClass = (document.getElementById('df-class') || {}).value || '';
+  const dfSub = (document.getElementById('df-subject') || {}).value || '';
+  const dfTch = (document.getElementById('df-teacher') || {}).value || '';
   let list = allDoubtsAdmin;
   if (doubtsAdminFilter === 'pending') list = list.filter(d => !d.reply);
   if (doubtsAdminFilter === 'replied') list = list.filter(d => !!d.reply);
+  if (dfClass) list = list.filter(d => String(d.students?.current_class || '') === dfClass);
+  if (dfSub) list = list.filter(d => (d.subject || '') === dfSub);
+  if (dfTch) list = list.filter(d => (d.teacher_id || '') === dfTch);
   const sub = document.getElementById('doubts-admin-sub');
   if (sub) sub.textContent = `${allDoubtsAdmin.filter(d=>!d.reply).length} pending · ${allDoubtsAdmin.length} total`;
   if (!list.length) { el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:0.85rem">No doubts ' + (doubtsAdminFilter !== 'all' ? 'in this category' : 'yet') + '.</div>'; return; }
@@ -2208,6 +2293,8 @@ function renderDoubtsAdmin() {
           <span style="font-weight:700;font-size:0.85rem;color:var(--navy)">${sName}</span>
           ${cls?`<span style="font-size:0.7rem;background:rgba(26,46,90,0.08);color:var(--navy);padding:2px 8px;border-radius:6px;">${cls}</span>`:''}
           ${d.subject?`<span style="font-size:0.7rem;background:rgba(201,168,76,0.12);color:var(--gold);padding:2px 8px;border-radius:6px;font-weight:700;">${d.subject}</span>`:''}
+          ${d.teachers?`<span style="font-size:0.7rem;background:rgba(14,65,101,0.07);color:var(--navy);padding:2px 8px;border-radius:6px;">👤 ${d.teachers.full_name.split(' ').slice(-1)[0]}</span>`:''}
+
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
           <span style="font-size:0.68rem;color:var(--muted)">${new Date(d.created_at).toLocaleDateString('en-IN')}</span>
