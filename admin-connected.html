@@ -176,6 +176,10 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div class="nav-item" onclick="showPage('timetable',this)"><span class="ni">📅</span> Timetable</div>
   </div>
   <div class="nav-grp admin-only-nav">
+    <div class="nav-grp-label">Staff</div>
+    <div class="nav-item" onclick="showPage('teachers',this)"><span class="ni">🧑‍🏫</span> Teachers</div>
+  </div>
+  <div class="nav-grp admin-only-nav">
     <div class="nav-grp-label">Admissions</div>
     <div class="nav-item" onclick="showPage('crm',this)"><span class="ni">🎯</span> Lead CRM <span class="nb gold" id="nb-leads">—</span></div>
   </div>
@@ -318,6 +322,98 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       </div>
     </div>
     <div class="card"><div class="card-title">Recently Sent</div><div id="recent-notifs"><div class="skeleton" style="height:150px;border-radius:8px;"></div></div></div>
+  </div>
+</div>
+
+<!-- TEACHER MANAGEMENT (admin only) -->
+<div class="page" id="page-teachers">
+  <div class="ph">
+    <div><div class="pt">Teachers</div><div class="ps" id="teachers-sub">Loading…</div></div>
+    <button class="btn btn-primary admin-only-nav" onclick="openAddTeacherModal()">+ Add Teacher</button>
+  </div>
+  <!-- Filter bar -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+    <div class="chip active" onclick="filterTeachers('active',this)" id="tc-active">Active</div>
+    <div class="chip" onclick="filterTeachers('inactive',this)" id="tc-inactive">Inactive</div>
+    <div class="chip" onclick="filterTeachers('all',this)" id="tc-all">All</div>
+    <input id="tc-search" type="text" placeholder="Search name or subject…" oninput="renderTeachers()"
+      style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;flex:1;min-width:160px;max-width:280px;outline:none;">
+  </div>
+  <div id="teachers-list"><div class="skeleton" style="height:80px;border-radius:10px;margin-bottom:10px;"></div><div class="skeleton" style="height:80px;border-radius:10px;"></div></div>
+</div>
+
+<!-- Add / Edit Teacher Modal -->
+<div class="modal-overlay" id="modal-teacher">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <span class="modal-title" id="teacher-modal-title">Add Teacher</span>
+      <button class="modal-close" onclick="closeModal('modal-teacher')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="tm-teacher-id">
+      <input type="hidden" id="tm-user-id">
+
+      <!-- Name + Phone -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Full Name *</label>
+          <input type="text" id="tm-name" placeholder="e.g. Priya Sharma" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Phone</label>
+          <input type="text" id="tm-phone" placeholder="10-digit mobile" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" maxlength="10">
+        </div>
+      </div>
+
+      <!-- Email + Password (only for new teacher) -->
+      <div id="tm-auth-fields">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Login Email *</label>
+            <input type="email" id="tm-email" placeholder="name@thinkark.in" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
+          </div>
+          <div>
+            <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Password *</label>
+            <input type="password" id="tm-password" placeholder="Min 8 characters" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" value="ThinkArk@123">
+          </div>
+        </div>
+      </div>
+
+      <!-- Subjects -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Subjects Taught</label>
+        <div id="tm-subjects-chips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;min-height:28px;"></div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="tm-subject-input" placeholder="Type subject and press Enter or +" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" style="flex:1;"
+            onkeydown="if(event.key==='Enter'){event.preventDefault();addTeacherSubject();}">
+          <button onclick="addTeacherSubject()" style="padding:8px 14px;background:var(--navy);color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem;">+</button>
+        </div>
+        <div style="margin-top:6px;font-size:0.74rem;color:var(--muted);">Quick add:
+          <span style="display:inline-flex;flex-wrap:wrap;gap:4px;margin-left:4px;" id="tm-subject-quick"></span>
+        </div>
+      </div>
+
+      <!-- Classes -->
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Classes Assigned</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;" id="tm-class-checks">
+          <!-- Generated by JS -->
+        </div>
+      </div>
+
+      <!-- Active status (edit only) -->
+      <div id="tm-active-row" style="display:none;margin-bottom:4px;">
+        <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;" style="display:flex;align-items:center;gap:10px;cursor:pointer;">
+          <input type="checkbox" id="tm-active" style="width:16px;height:16px;">
+          <span>Active (teacher can log in and use the app)</span>
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-teacher')">Cancel</button>
+      <button class="btn btn-danger" id="tm-deactivate-btn" style="display:none;margin-right:auto;" onclick="deactivateTeacher()">Deactivate</button>
+      <button class="btn btn-primary" onclick="saveTeacher()" id="tm-save-btn">Add Teacher</button>
+    </div>
   </div>
 </div>
 
@@ -720,7 +816,7 @@ let allDoubtsAdmin = [];
 let allStudents = [], allLeads = [], allContent = [], allExams = [], allResults = [], allSubjects = [], allNotifs = [], allPrograms = [];
 let leadFilter = null, qCount = 1;
 
-const pageTitles = { dashboard:'Dashboard', students:'Students', attendance:'Attendance', marks:'Marks & Results', content:'Notes & Content', exams:'Exam Manager', 'notify-page':'Notifications', crm:'Lead CRM', doubts:'Student Doubts', timetable:'Timetable', 'my-profile':'My Profile' };
+const pageTitles = { dashboard:'Dashboard', students:'Students', attendance:'Attendance', marks:'Marks & Results', content:'Notes & Content', exams:'Exam Manager', 'notify-page':'Notifications', crm:'Lead CRM', doubts:'Student Doubts', timetable:'Timetable', teachers:'Teachers', 'my-profile':'My Profile' };
 
 // -- Toast --
 // -- Mobile sidebar --
@@ -2193,6 +2289,217 @@ async function deleteLead(id) {
   toast('Lead deleted.'); await loadLeads(); renderLeads();
 }
 
+// ══════════════════════════════════════════════
+//  TEACHER MANAGEMENT
+// ══════════════════════════════════════════════
+let allTeachers = [];
+let teachersFilter = 'active';
+
+const KNOWN_SUBJECTS = ['Mathematics','Science','Physics','Chemistry','Biology','English','Hindi','Social Studies','History','Geography','Economics','Accountancy','Political Science','Computer Science','Physical Education'];
+
+async function loadTeachers() {
+  const { data } = await sb.from('teachers')
+    .select('*, users(email, role)')
+    .order('full_name');
+  allTeachers = data || [];
+  const active = allTeachers.filter(t => t.is_active).length;
+  const sub = document.getElementById('teachers-sub');
+  if (sub) sub.textContent = active + ' active · ' + allTeachers.length + ' total';
+  renderTeachers();
+}
+
+function filterTeachers(type, btn) {
+  teachersFilter = type;
+  document.querySelectorAll('#page-teachers .chip').forEach(c => c.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderTeachers();
+}
+
+function renderTeachers() {
+  const el = document.getElementById('teachers-list');
+  if (!el) return;
+  const search = (document.getElementById('tc-search') || {}).value?.toLowerCase() || '';
+  let list = allTeachers;
+  if (teachersFilter === 'active') list = list.filter(t => t.is_active);
+  if (teachersFilter === 'inactive') list = list.filter(t => !t.is_active);
+  if (search) list = list.filter(t =>
+    (t.full_name||'').toLowerCase().includes(search) ||
+    (t.subjects||[]).some(s => s.toLowerCase().includes(search))
+  );
+  if (!list.length) {
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--muted);font-size:0.85rem;">No teachers found.</div>';
+    return;
+  }
+  el.innerHTML = list.map(t => {
+    const email = t.users?.email || '—';
+    const classes = (t.class_levels||[]).sort((a,b)=>a-b).map(c=>'<span style="font-size:0.68rem;background:rgba(14,65,101,0.08);color:var(--navy);padding:2px 7px;border-radius:5px;font-weight:700;">Cl.'+c+'</span>').join(' ');
+    const subjects = (t.subjects||[]).map(s=>'<span style="font-size:0.7rem;background:rgba(201,168,76,0.12);color:var(--gold);padding:2px 8px;border-radius:5px;font-weight:700;">'+s+'</span>').join(' ');
+    const statusDot = t.is_active
+      ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:5px;"></span>'
+      : '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#ef4444;margin-right:5px;"></span>';
+    return `<div style="background:white;border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+          <span style="font-weight:800;font-size:0.95rem;color:var(--navy);font-family:'Barlow Condensed',sans-serif;">${t.full_name}</span>
+          ${statusDot}<span style="font-size:0.72rem;color:var(--muted);">${t.is_active?'Active':'Inactive'}</span>
+        </div>
+        <div style="font-size:0.76rem;color:var(--muted);margin-bottom:6px;">${email}${t.phone?' · '+t.phone:''}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px;">${subjects||'<span style="font-size:0.72rem;color:var(--muted);">No subjects assigned</span>'}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">${classes||'<span style="font-size:0.72rem;color:var(--muted);">No classes assigned</span>'}</div>
+      </div>
+      <button onclick="openEditTeacherModal('${t.id}')" style="padding:7px 16px;border:1px solid var(--border);border-radius:8px;background:white;font-size:0.82rem;cursor:pointer;color:var(--navy);font-family:'Barlow Condensed',sans-serif;font-weight:700;white-space:nowrap;">Edit</button>
+    </div>`;
+  }).join('');
+}
+
+// -- Teacher modal helpers --
+let tmSubjects = [];
+
+function openAddTeacherModal() {
+  tmSubjects = [];
+  document.getElementById('teacher-modal-title').textContent = 'Add Teacher';
+  document.getElementById('tm-teacher-id').value = '';
+  document.getElementById('tm-user-id').value = '';
+  document.getElementById('tm-name').value = '';
+  document.getElementById('tm-phone').value = '';
+  document.getElementById('tm-email').value = '';
+  document.getElementById('tm-password').value = 'ThinkArk@123';
+  document.getElementById('tm-auth-fields').style.display = '';
+  document.getElementById('tm-active-row').style.display = 'none';
+  document.getElementById('tm-deactivate-btn').style.display = 'none';
+  document.getElementById('tm-save-btn').textContent = 'Add Teacher';
+  renderTeacherSubjectChips();
+  renderTeacherClassChecks([]);
+  buildQuickSubjects();
+  openModal('modal-teacher');
+}
+
+function openEditTeacherModal(teacherId) {
+  const t = allTeachers.find(x => x.id === teacherId);
+  if (!t) return;
+  tmSubjects = [...(t.subjects || [])];
+  document.getElementById('teacher-modal-title').textContent = 'Edit Teacher';
+  document.getElementById('tm-teacher-id').value = t.id;
+  document.getElementById('tm-user-id').value = t.user_id || '';
+  document.getElementById('tm-name').value = t.full_name || '';
+  document.getElementById('tm-phone').value = t.phone || '';
+  document.getElementById('tm-auth-fields').style.display = 'none'; // hide email/password for edits
+  document.getElementById('tm-active-row').style.display = '';
+  document.getElementById('tm-active').checked = !!t.is_active;
+  document.getElementById('tm-deactivate-btn').style.display = t.is_active ? '' : 'none';
+  document.getElementById('tm-deactivate-btn').textContent = t.is_active ? 'Deactivate' : 'Activate';
+  document.getElementById('tm-save-btn').textContent = 'Save Changes';
+  renderTeacherSubjectChips();
+  renderTeacherClassChecks(t.class_levels || []);
+  buildQuickSubjects();
+  openModal('modal-teacher');
+}
+
+function buildQuickSubjects() {
+  const wrap = document.getElementById('tm-subject-quick');
+  if (!wrap) return;
+  wrap.innerHTML = KNOWN_SUBJECTS.filter(s => !tmSubjects.includes(s)).map(s =>
+    `<span onclick="addTeacherSubjectByName('${s}')" style="cursor:pointer;font-size:0.72rem;background:rgba(14,65,101,0.07);color:var(--navy);padding:2px 8px;border-radius:5px;">${s}</span>`
+  ).join('');
+}
+
+function addTeacherSubject() {
+  const inp = document.getElementById('tm-subject-input');
+  const val = inp ? inp.value.trim() : '';
+  if (!val) return;
+  addTeacherSubjectByName(val);
+  inp.value = '';
+}
+function addTeacherSubjectByName(name) {
+  if (!name || tmSubjects.includes(name)) return;
+  tmSubjects.push(name);
+  renderTeacherSubjectChips();
+  buildQuickSubjects();
+}
+function removeTeacherSubject(name) {
+  tmSubjects = tmSubjects.filter(s => s !== name);
+  renderTeacherSubjectChips();
+  buildQuickSubjects();
+}
+function renderTeacherSubjectChips() {
+  const wrap = document.getElementById('tm-subjects-chips');
+  if (!wrap) return;
+  wrap.innerHTML = tmSubjects.map(s =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.78rem;font-weight:700;padding:4px 10px;border-radius:20px;">
+      ${s}<span onclick="removeTeacherSubject('${s}')" style="cursor:pointer;opacity:0.6;font-size:0.9rem;line-height:1;">✕</span>
+    </span>`
+  ).join('');
+}
+function renderTeacherClassChecks(selected) {
+  const wrap = document.getElementById('tm-class-checks');
+  if (!wrap) return;
+  wrap.innerHTML = [7,8,9,10,11,12].map(cls =>
+    `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:5px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--navy);background:white;">
+      <input type="checkbox" value="${cls}" ${selected.includes(cls)?'checked':''} style="width:14px;height:14px;"> Class ${cls}
+    </label>`
+  ).join('');
+}
+function getSelectedClasses() {
+  return Array.from(document.querySelectorAll('#tm-class-checks input:checked')).map(cb => parseInt(cb.value));
+}
+
+async function saveTeacher() {
+  const teacherId = document.getElementById('tm-teacher-id').value;
+  const name = document.getElementById('tm-name').value.trim();
+  const phone = document.getElementById('tm-phone').value.trim();
+  const isActive = document.getElementById('tm-active').checked;
+  const classes = getSelectedClasses();
+  if (!name) { toast('Full name is required.', 'error'); return; }
+  const btn = document.getElementById('tm-save-btn');
+  btn.disabled = true; btn.textContent = 'Saving…';
+
+  if (teacherId) {
+    // --- EDIT existing teacher ---
+    const { error } = await sb.from('teachers').update({
+      full_name: name, phone: phone || null,
+      subjects: tmSubjects, class_levels: classes,
+      is_active: isActive
+    }).eq('id', teacherId);
+    if (error) { toast('Error: ' + error.message, 'error'); btn.disabled=false; btn.textContent='Save Changes'; return; }
+    // Sync name to public.users if user_id exists
+    const userId = document.getElementById('tm-user-id').value;
+    if (userId) await sb.from('users').update({ full_name: name, is_active: isActive }).eq('id', userId);
+    toast('Teacher updated!');
+  } else {
+    // --- ADD new teacher ---
+    const email = document.getElementById('tm-email').value.trim();
+    const password = document.getElementById('tm-password').value;
+    if (!email) { toast('Login email is required.', 'error'); btn.disabled=false; btn.textContent='Add Teacher'; return; }
+    if (!password || password.length < 8) { toast('Password must be at least 8 characters.', 'error'); btn.disabled=false; btn.textContent='Add Teacher'; return; }
+    // Use Supabase admin signUp via service role is not available client-side.
+    // Instead we use the same SQL-based approach: insert via RPC or direct table insert.
+    // We'll call a Postgres function that creates auth + public users atomically.
+    const { data: newUserId, error: rpcErr } = await sb.rpc('create_teacher_account', {
+      p_email: email, p_password: password, p_full_name: name,
+      p_phone: phone || null, p_subjects: tmSubjects, p_class_levels: classes
+    });
+    if (rpcErr) { toast('Error creating account: ' + rpcErr.message, 'error'); btn.disabled=false; btn.textContent='Add Teacher'; return; }
+    toast('Teacher account created!');
+  }
+  closeModal('modal-teacher');
+  btn.disabled=false;
+  await loadTeachers();
+}
+
+async function deactivateTeacher() {
+  const teacherId = document.getElementById('tm-teacher-id').value;
+  const userId = document.getElementById('tm-user-id').value;
+  const isNowActive = !document.getElementById('tm-active').checked;
+  if (!teacherId) return;
+  const { error } = await sb.from('teachers').update({ is_active: !isNowActive }).eq('id', teacherId);
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  if (userId) await sb.from('users').update({ is_active: !isNowActive }).eq('id', userId);
+  toast(isNowActive ? 'Teacher deactivated.' : 'Teacher reactivated.');
+  closeModal('modal-teacher');
+  await loadTeachers();
+}
+// ══════════════════════════════════════════════
+
 // -- Doubts (admin/teacher view) --
 async function loadDoubtsAdmin() {
   const isTeacher = adminData && adminData.role === 'teacher';
@@ -2391,6 +2698,7 @@ function showPage(id, navEl) {
   if (id==='marks'){ renderMarks(); populateMarksStudents(); }
   if (id==='notify-page') renderNotifications();
   if (id==='crm') renderLeads();
+  if (id==='teachers') loadTeachers();
   if (id==='doubts') renderDoubtsAdmin();
   if (id==='my-profile') renderMyProfile();
   if (id==='timetable') {
