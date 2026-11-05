@@ -2295,7 +2295,7 @@ async function deleteLead(id) {
 let allTeachers = [];
 let teachersFilter = 'active';
 
-const KNOWN_SUBJECTS = ['Mathematics','Science','Physics','Chemistry','Biology','English','Hindi','Social Studies','History','Geography','Economics','Accountancy','Political Science','Computer Science','Physical Education'];
+const KNOWN_SUBJECTS = ['Mathematics','Science','Physics','Chemistry','Biology','Computers','English','Hindi','Social Studies','History & Civics','Geography','Economics','Accountancy','Business Studies'];
 
 async function loadTeachers() {
   const { data } = await sb.from('teachers')
