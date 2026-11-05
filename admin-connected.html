@@ -173,6 +173,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div class="nav-item" onclick="showPage('content',this)"><span class="ni">📄</span> Notes & Content</div>
     <div class="nav-item" onclick="showPage('exams',this)"><span class="ni">📝</span> Exam Manager</div>
     <div class="nav-item" onclick="showPage('doubts',this)"><span class="ni">💬</span> Doubts <span class="nb" id="nb-doubts">—</span></div>
+    <div class="nav-item" onclick="showPage('timetable',this)"><span class="ni">📅</span> Timetable <span style="font-size:0.58rem;font-weight:800;background:rgba(201,168,76,0.15);color:var(--gold);padding:2px 6px;border-radius:6px;margin-left:4px;letter-spacing:0.5px;">SOON</span></div>
   </div>
   <div class="nav-grp admin-only-nav">
     <div class="nav-grp-label">Admissions</div>
@@ -348,6 +349,19 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
 </div>
 
 <!-- MY PROFILE (teacher/admin) -->
+<div class="page" id="page-timetable">
+  <div class="ph"><div><div class="pt">Timetable</div><div class="ps">Weekly class schedule</div></div></div>
+  <div class="card" style="text-align:center;padding:56px 24px;">
+    <div style="font-size:3rem;margin-bottom:16px;">🏗️</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:var(--navy);margin-bottom:8px;">Timetable Manager — Coming Soon</div>
+    <div style="font-size:0.88rem;color:var(--muted);max-width:420px;margin:0 auto 20px;line-height:1.6;">
+      Build and manage weekly class schedules here. Assign subjects, teachers and time slots per class and board.
+      Students and teachers will see their personalised timetable once it's live.
+    </div>
+    <span style="display:inline-block;background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.72rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;letter-spacing:1.5px;padding:5px 14px;border-radius:20px;text-transform:uppercase;">Under Construction</span>
+  </div>
+</div>
+
 <div class="page" id="page-my-profile">
   <div class="ph"><div><div class="pt">My Profile</div><div class="ps">Account details</div></div></div>
   <div style="background:var(--navy);border-radius:16px;padding:28px 32px;margin-bottom:24px;position:relative;overflow:hidden;">
@@ -627,7 +641,7 @@ let allDoubtsAdmin = [];
 let allStudents = [], allLeads = [], allContent = [], allExams = [], allResults = [], allSubjects = [], allNotifs = [], allPrograms = [];
 let leadFilter = null, qCount = 1;
 
-const pageTitles = { dashboard:'Dashboard', students:'Students', attendance:'Attendance', marks:'Marks & Results', content:'Notes & Content', exams:'Exam Manager', 'notify-page':'Notifications', crm:'Lead CRM', doubts:'Student Doubts', 'my-profile':'My Profile' };
+const pageTitles = { dashboard:'Dashboard', students:'Students', attendance:'Attendance', marks:'Marks & Results', content:'Notes & Content', exams:'Exam Manager', 'notify-page':'Notifications', crm:'Lead CRM', doubts:'Student Doubts', timetable:'Timetable', 'my-profile':'My Profile' };
 
 // -- Toast --
 // -- Mobile sidebar --
