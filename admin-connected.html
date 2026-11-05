@@ -173,7 +173,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div class="nav-item" onclick="showPage('content',this)"><span class="ni">📄</span> Notes & Content</div>
     <div class="nav-item" onclick="showPage('exams',this)"><span class="ni">📝</span> Exam Manager</div>
     <div class="nav-item" onclick="showPage('doubts',this)"><span class="ni">💬</span> Doubts <span class="nb" id="nb-doubts">—</span></div>
-    <div class="nav-item" onclick="showPage('timetable',this)"><span class="ni">📅</span> Timetable <span style="font-size:0.58rem;font-weight:800;background:rgba(201,168,76,0.15);color:var(--gold);padding:2px 6px;border-radius:6px;margin-left:4px;letter-spacing:0.5px;">SOON</span></div>
+    <div class="nav-item" onclick="showPage('timetable',this)"><span class="ni">📅</span> Timetable</div>
   </div>
   <div class="nav-grp admin-only-nav">
     <div class="nav-grp-label">Admissions</div>
@@ -348,17 +348,79 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
   <div id="doubts-admin-list"><div class="skeleton" style="height:120px;border-radius:8px;margin-bottom:12px;"></div><div class="skeleton" style="height:120px;border-radius:8px;"></div></div>
 </div>
 
-<!-- MY PROFILE (teacher/admin) -->
+<!-- TIMETABLE MANAGER -->
 <div class="page" id="page-timetable">
-  <div class="ph"><div><div class="pt">Timetable</div><div class="ps">Weekly class schedule</div></div></div>
-  <div class="card" style="text-align:center;padding:56px 24px;">
-    <div style="font-size:3rem;margin-bottom:16px;">🏗️</div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:800;color:var(--navy);margin-bottom:8px;">Timetable Manager — Coming Soon</div>
-    <div style="font-size:0.88rem;color:var(--muted);max-width:420px;margin:0 auto 20px;line-height:1.6;">
-      Build and manage weekly class schedules here. Assign subjects, teachers and time slots per class and board.
-      Students and teachers will see their personalised timetable once it's live.
+  <div class="ph">
+    <div><div class="pt">Timetable</div><div class="ps">Weekly class schedule</div></div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+      <select id="tt-class" onchange="loadTimetable()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:white;">
+        <option value="">Select Class</option>
+        <option value="7">Class 7</option><option value="8">Class 8</option>
+        <option value="9">Class 9</option><option value="10">Class 10</option>
+        <option value="11">Class 11</option><option value="12">Class 12</option>
+      </select>
+      <select id="tt-board" onchange="loadTimetable()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:white;">
+        <option value="CBSE">CBSE</option><option value="ICSE">ICSE</option>
+      </select>
+      <span id="tt-save-status" style="font-size:0.78rem;color:var(--muted);"></span>
     </div>
-    <span style="display:inline-block;background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.72rem;font-weight:800;font-family:'Barlow Condensed',sans-serif;letter-spacing:1.5px;padding:5px 14px;border-radius:20px;text-transform:uppercase;">Under Construction</span>
+  </div>
+
+  <!-- Empty state -->
+  <div id="tt-empty" style="text-align:center;padding:56px 24px;background:white;border-radius:16px;border:1px solid var(--border);">
+    <div style="font-size:2.5rem;margin-bottom:12px;">📅</div>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:6px;">Select a class and board to manage its timetable</div>
+    <div style="font-size:0.85rem;color:var(--muted);">Click any cell to assign a subject and teacher</div>
+  </div>
+
+  <!-- Timetable grid -->
+  <div id="tt-grid-wrap" style="display:none;overflow-x:auto;">
+    <table id="tt-grid" style="width:100%;border-collapse:collapse;min-width:700px;background:white;border-radius:16px;overflow:hidden;border:1px solid var(--border);">
+      <thead id="tt-head"></thead>
+      <tbody id="tt-body"></tbody>
+    </table>
+    <div style="margin-top:10px;font-size:0.76rem;color:var(--muted);">Click any subject cell to edit · Break cells are locked · Changes save automatically</div>
+  </div>
+</div>
+
+<!-- Timetable slot edit modal -->
+<div class="modal-overlay" id="modal-tt-slot">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header"><span class="modal-title" id="tt-slot-title">Edit Slot</span><button class="modal-close" onclick="closeModal('modal-tt-slot')">✕</button></div>
+    <div class="modal-body">
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Subject</label>
+        <select id="tt-slot-subject" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+          <option value="">— Free Period —</option>
+        </select>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Teacher</label>
+        <select id="tt-slot-teacher" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+          <option value="">— Not Assigned —</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Start Time Override</label>
+          <input type="time" id="tt-slot-start" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;" placeholder="Leave blank for default">
+        </div>
+        <div>
+          <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">End Time Override</label>
+          <input type="time" id="tt-slot-end" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;" placeholder="Leave blank for default">
+        </div>
+      </div>
+      <div style="font-size:0.76rem;color:var(--muted);margin-bottom:14px;" id="tt-slot-default-times"></div>
+      <div style="margin-bottom:4px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Notes</label>
+        <input type="text" id="tt-slot-notes" placeholder="Optional notes..." style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-tt-slot')">Cancel</button>
+      <button class="btn btn-danger" id="tt-slot-clear-btn" onclick="clearTimetableSlot()" style="margin-right:auto;">Clear Slot</button>
+      <button class="btn btn-primary" onclick="saveTimetableSlot()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -727,6 +789,255 @@ async function loadSubjects() {
   const { data } = await sb.from('subjects').select('*, programs(class_level)').order('name');
   allSubjects = data || [];
 }
+
+// ═══════════════════════════════════════════════
+//  TIMETABLE MANAGER
+// ═══════════════════════════════════════════════
+let ttTemplates = [];   // period_templates for current class+board
+let ttSlots = {};       // keyed "day_period_template_id" => slot row
+let ttAllTeachers = []; // cached from teachers table
+let ttEditing = null;   // { day, templateId, slotId? }
+
+const TT_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const TT_DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+async function loadTimetable() {
+  const cls = document.getElementById('tt-class').value;
+  const board = document.getElementById('tt-board').value;
+  const empty = document.getElementById('tt-empty');
+  const wrap = document.getElementById('tt-grid-wrap');
+  if (!cls) { empty.style.display=''; wrap.style.display='none'; return; }
+  empty.style.display='none'; wrap.style.display='';
+  document.getElementById('tt-save-status').textContent = 'Loading…';
+
+  // Load templates
+  const { data: tmpl } = await sb.from('period_templates')
+    .select('*').eq('class_level', parseInt(cls)).eq('board', board)
+    .order('period_number');
+  ttTemplates = tmpl || [];
+
+  // Load slots
+  const templateIds = ttTemplates.map(function(t){ return t.id; });
+  let slotsData = [];
+  if (templateIds.length) {
+    const { data: sd } = await sb.from('timetable_slots')
+      .select('*, subjects(id,name), teachers(id,full_name)')
+      .in('period_template_id', templateIds)
+      .eq('class_level', parseInt(cls)).eq('board', board).eq('is_active', true);
+    slotsData = sd || [];
+  }
+  ttSlots = {};
+  slotsData.forEach(function(s) {
+    ttSlots[s.day_of_week + '_' + s.period_template_id] = s;
+  });
+
+  // Load teachers if not already
+  if (!ttAllTeachers.length) {
+    const { data: td } = await sb.from('teachers').select('id, full_name, subjects').order('full_name');
+    ttAllTeachers = td || [];
+  }
+
+  renderTimetableGrid();
+  document.getElementById('tt-save-status').textContent = '';
+}
+
+function renderTimetableGrid() {
+  const head = document.getElementById('tt-head');
+  const body = document.getElementById('tt-body');
+
+  // Header row: empty + 7 days
+  head.innerHTML = '<tr>' +
+    '<th style="padding:10px 14px;text-align:left;font-size:0.75rem;font-weight:700;color:var(--muted);background:#f8f7f4;border-bottom:1px solid var(--border);min-width:110px;">Time</th>' +
+    TT_DAY_SHORT.map(function(d,i) {
+      return '<th style="padding:10px 8px;text-align:center;font-size:0.75rem;font-weight:700;color:var(--navy);background:#f8f7f4;border-bottom:1px solid var(--border);border-left:1px solid var(--border);min-width:100px;">' + d + '</th>';
+    }).join('') + '</tr>';
+
+  // Body rows: one per period template
+  body.innerHTML = ttTemplates.map(function(tmpl) {
+    const start = tmpl.default_start_time.slice(0,5);
+    const end = tmpl.default_end_time.slice(0,5);
+    const timeLabel = start + ' – ' + end;
+    const isBreak = tmpl.is_break;
+
+    const rowBg = isBreak ? 'background:rgba(201,168,76,0.07);' : '';
+    const cells = TT_DAYS.map(function(day, idx) {
+      const dayNum = idx + 1;
+      const key = dayNum + '_' + tmpl.id;
+      const slot = ttSlots[key];
+      if (isBreak) {
+        return '<td style="text-align:center;padding:8px 4px;border-left:1px solid var(--border);font-size:0.72rem;color:var(--muted);font-style:italic;">' + tmpl.label + '</td>';
+      }
+      let cellContent = '<div style="font-size:0.72rem;color:var(--muted);font-style:italic;">Free</div>';
+      let cellBg = 'background:white;cursor:pointer;';
+      if (slot) {
+        const subName = slot.subjects ? slot.subjects.name : '—';
+        const tchName = slot.teachers ? slot.teachers.full_name.split(' ').slice(-1)[0] : '';
+        cellContent = '<div style="font-size:0.8rem;font-weight:700;color:var(--navy);">' + subName + '</div>' +
+          (tchName ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:2px;">' + tchName + '</div>' : '');
+        cellBg = 'background:rgba(14,65,101,0.05);cursor:pointer;';
+      }
+      return '<td onclick="openTtSlotModal(' + dayNum + ',\'' + tmpl.id + '\')" style="padding:8px 6px;text-align:center;border-left:1px solid var(--border);' + cellBg + 'transition:background 0.15s;" onmouseover="this.style.background=\'rgba(14,65,101,0.1)\'" onmouseout="this.style.background=\'' + (slot ? 'rgba(14,65,101,0.05)' : 'white') + '\'">' + cellContent + '</td>';
+    }).join('');
+
+    return '<tr style="border-bottom:1px solid var(--border);' + rowBg + '">' +
+      '<td style="padding:10px 14px;font-size:0.76rem;color:var(--muted);">' +
+        '<div style="font-weight:700;color:var(--navy);font-size:0.8rem;">' + (isBreak ? '' : tmpl.label) + '</div>' +
+        '<div>' + timeLabel + '</div>' +
+        (isBreak ? '<div style="font-size:0.7rem;font-style:italic;">' + tmpl.label + '</div>' : '') +
+      '</td>' + cells + '</tr>';
+  }).join('');
+}
+
+function openTtSlotModal(dayNum, templateId) {
+  const tmpl = ttTemplates.find(function(t){ return t.id === templateId; });
+  if (!tmpl || tmpl.is_break) return;
+  ttEditing = { day: dayNum, templateId: templateId };
+  const slot = ttSlots[dayNum + '_' + templateId];
+
+  document.getElementById('tt-slot-title').textContent = TT_DAYS[dayNum-1] + ' — ' + tmpl.label;
+  document.getElementById('tt-slot-default-times').textContent =
+    'Default: ' + tmpl.default_start_time.slice(0,5) + ' – ' + tmpl.default_end_time.slice(0,5);
+
+  // Populate subjects
+  const subSel = document.getElementById('tt-slot-subject');
+  subSel.innerHTML = '<option value="">— Free Period —</option>';
+  allSubjects.forEach(function(s) {
+    const opt = document.createElement('option');
+    opt.value = s.id; opt.textContent = s.name;
+    if (slot && slot.subject_id === s.id) opt.selected = true;
+    subSel.appendChild(opt);
+  });
+
+  // Populate teachers
+  const tchSel = document.getElementById('tt-slot-teacher');
+  tchSel.innerHTML = '<option value="">— Not Assigned —</option>';
+  ttAllTeachers.forEach(function(t) {
+    const opt = document.createElement('option');
+    opt.value = t.id; opt.textContent = t.full_name;
+    if (slot && slot.teacher_id === t.id) opt.selected = true;
+    tchSel.appendChild(opt);
+  });
+
+  document.getElementById('tt-slot-start').value = slot && slot.start_time_override ? slot.start_time_override.slice(0,5) : '';
+  document.getElementById('tt-slot-end').value = slot && slot.end_time_override ? slot.end_time_override.slice(0,5) : '';
+  document.getElementById('tt-slot-notes').value = slot ? (slot.notes || '') : '';
+
+  document.getElementById('tt-slot-clear-btn').style.display = slot ? '' : 'none';
+  openModal('modal-tt-slot');
+}
+
+async function saveTimetableSlot() {
+  if (!ttEditing) return;
+  const cls = parseInt(document.getElementById('tt-class').value);
+  const board = document.getElementById('tt-board').value;
+  const subjectId = document.getElementById('tt-slot-subject').value || null;
+  const teacherId = document.getElementById('tt-slot-teacher').value || null;
+  const startOv = document.getElementById('tt-slot-start').value || null;
+  const endOv = document.getElementById('tt-slot-end').value || null;
+  const notes = document.getElementById('tt-slot-notes').value.trim() || null;
+  const key = ttEditing.day + '_' + ttEditing.templateId;
+  const existing = ttSlots[key];
+
+  document.getElementById('tt-save-status').textContent = 'Saving…';
+  const payload = {
+    class_level: cls, board: board,
+    day_of_week: ttEditing.day,
+    period_template_id: ttEditing.templateId,
+    subject_id: subjectId, teacher_id: teacherId,
+    start_time_override: startOv, end_time_override: endOv,
+    notes: notes, is_active: true, updated_at: new Date().toISOString()
+  };
+  let err;
+  if (existing) {
+    const { error } = await sb.from('timetable_slots').update(payload).eq('id', existing.id);
+    err = error;
+  } else {
+    const { error } = await sb.from('timetable_slots').insert(payload);
+    err = error;
+  }
+  if (err) { toast('Error saving slot: ' + err.message, 'error'); document.getElementById('tt-save-status').textContent = ''; return; }
+  closeModal('modal-tt-slot');
+  await loadTimetable();
+  toast('Slot saved', 'success');
+}
+
+async function clearTimetableSlot() {
+  if (!ttEditing) return;
+  const key = ttEditing.day + '_' + ttEditing.templateId;
+  const existing = ttSlots[key];
+  if (!existing) { closeModal('modal-tt-slot'); return; }
+  document.getElementById('tt-save-status').textContent = 'Clearing…';
+  const { error } = await sb.from('timetable_slots').delete().eq('id', existing.id);
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  closeModal('modal-tt-slot');
+  await loadTimetable();
+  toast('Slot cleared', 'success');
+}
+async function loadTeacherSchedule() {
+  // For teacher role: show read-only view of their slots across all classes
+  const wrap = document.getElementById('tt-grid-wrap');
+  const empty = document.getElementById('tt-empty');
+  const ph = document.querySelector('#page-timetable .ph div:last-child');
+  if (ph) ph.style.display = 'none'; // hide class/board selector for teachers
+
+  const td = adminData._teacherData;
+  if (!td) { empty.style.display=''; wrap.style.display='none'; return; }
+
+  empty.style.display='none'; wrap.style.display='';
+  document.getElementById('tt-save-status').textContent = 'Loading your schedule…';
+
+  // Fetch all slots for this teacher
+  const { data: slots } = await sb.from('timetable_slots')
+    .select('*, period_templates(*), subjects(name)')
+    .eq('teacher_id', td.id).eq('is_active', true);
+
+  if (!slots || !slots.length) {
+    wrap.style.display='none'; empty.style.display='';
+    empty.querySelector('div:nth-child(2)').textContent = 'No schedule assigned yet';
+    empty.querySelector('div:nth-child(3)').textContent = 'Ask an admin to assign your timetable slots';
+    document.getElementById('tt-save-status').textContent = '';
+    return;
+  }
+
+  // Build a combined grid: rows = periods grouped by time, cols = days
+  // Group by time band across all classes
+  const periodMap = {}; // "HH:MM-HH:MM" => { label, periods[] }
+  slots.forEach(function(s) {
+    const tmpl = s.period_templates;
+    if (!tmpl || tmpl.is_break) return;
+    const start = (s.start_time_override || tmpl.default_start_time).slice(0,5);
+    const end = (s.end_time_override || tmpl.default_end_time).slice(0,5);
+    const key = start + '-' + end;
+    if (!periodMap[key]) periodMap[key] = { start, end, label: tmpl.label, slots: {} };
+    periodMap[key].slots[s.day_of_week] = s;
+  });
+
+  const periods = Object.values(periodMap).sort(function(a,b){ return a.start.localeCompare(b.start); });
+
+  const head = document.getElementById('tt-head');
+  const body = document.getElementById('tt-body');
+  head.innerHTML = '<tr><th style="padding:10px 14px;text-align:left;font-size:0.75rem;font-weight:700;color:var(--muted);background:#f8f7f4;border-bottom:1px solid var(--border);min-width:100px;">Time</th>' +
+    TT_DAY_SHORT.map(function(d){ return '<th style="padding:10px 8px;text-align:center;font-size:0.75rem;font-weight:700;color:var(--navy);background:#f8f7f4;border-bottom:1px solid var(--border);border-left:1px solid var(--border);min-width:100px;">' + d + '</th>'; }).join('') + '</tr>';
+
+  body.innerHTML = periods.map(function(p) {
+    const cells = [1,2,3,4,5,6,7].map(function(day) {
+      const s = p.slots[day];
+      if (!s) return '<td style="padding:8px 6px;text-align:center;border-left:1px solid var(--border);"><div style="font-size:0.72rem;color:var(--muted);">—</div></td>';
+      return '<td style="padding:8px 6px;text-align:center;border-left:1px solid var(--border);background:rgba(14,65,101,0.05);">' +
+        '<div style="font-size:0.8rem;font-weight:700;color:var(--navy);">' + (s.subjects ? s.subjects.name : '—') + '</div>' +
+        '<div style="font-size:0.68rem;color:var(--muted);margin-top:2px;">Class ' + s.class_level + ' ' + s.board + '</div>' +
+        '</td>';
+    }).join('');
+    return '<tr style="border-bottom:1px solid var(--border);">' +
+      '<td style="padding:10px 14px;font-size:0.76rem;color:var(--muted);">' +
+        '<div style="font-weight:700;color:var(--navy);font-size:0.8rem;">' + p.label + '</div>' +
+        '<div>' + p.start + ' – ' + p.end + '</div>' +
+      '</td>' + cells + '</tr>';
+  }).join('');
+
+  document.getElementById('tt-save-status').textContent = '';
+}
+// ═══════════════════════════════════════════════
 
 function populateSubjectDropdowns() {
   // For exam modal subject
@@ -1995,6 +2306,10 @@ function showPage(id, navEl) {
   if (id==='crm') renderLeads();
   if (id==='doubts') renderDoubtsAdmin();
   if (id==='my-profile') renderMyProfile();
+  if (id==='timetable') {
+    if (isTeacher) loadTeacherSchedule();
+    // For admin: just show selector, no auto-load
+  }
 }
 
 // -- Modals --
