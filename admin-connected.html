@@ -487,18 +487,21 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
   </div>
 
   <!-- Week navigator -->
-  <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px;background:white;border-radius:12px;padding:12px 20px;border:1px solid var(--border);">
-    <button onclick="ttChangeWeek(-1)" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:var(--navy);padding:4px 10px;border-radius:8px;transition:background 0.15s;" onmouseover="this.style.background='#f0f4f8'" onmouseout="this.style.background='none'">‹</button>
-    <div style="text-align:center;position:relative;">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;color:var(--navy);cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="document.getElementById('tt-week-picker').showPicker ? document.getElementById('tt-week-picker').showPicker() : document.getElementById('tt-week-picker').click()" title="Click to jump to a date">
-        <span id="tt-week-label">Week of —</span><span style="font-size:0.8rem;opacity:0.6;">📅</span>
-      </div>
+  <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:16px;background:white;border-radius:12px;padding:12px 20px;border:1px solid var(--border);">
+    <button onclick="ttChangeWeek(-1)" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--navy);padding:4px 12px;border-radius:8px;transition:background 0.15s;line-height:1;" onmouseover="this.style.background='#f0f4f8'" onmouseout="this.style.background='none'" title="Previous week">‹</button>
+    <div style="text-align:center;min-width:220px;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.05rem;font-weight:700;color:var(--navy);" id="tt-week-label">Week of —</div>
       <div style="font-size:0.72rem;color:var(--muted);" id="tt-week-range"></div>
-      <!-- Hidden date input for calendar jump -->
-      <input type="date" id="tt-week-picker" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:50%;" onchange="ttJumpToDate(this.value)">
     </div>
-    <button onclick="ttChangeWeek(1)" style="background:none;border:none;cursor:pointer;font-size:1.3rem;color:var(--navy);padding:4px 10px;border-radius:8px;transition:background 0.15s;" onmouseover="this.style.background='#f0f4f8'" onmouseout="this.style.background='none'">›</button>
-    <button onclick="ttGoToToday()" style="font-size:0.76rem;padding:5px 12px;border:1px solid var(--border);border-radius:8px;background:white;cursor:pointer;color:var(--navy);margin-left:8px;">Today</button>
+    <button onclick="ttChangeWeek(1)" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--navy);padding:4px 12px;border-radius:8px;transition:background 0.15s;line-height:1;" onmouseover="this.style.background='#f0f4f8'" onmouseout="this.style.background='none'" title="Next week">›</button>
+    <!-- Separator -->
+    <div style="width:1px;height:28px;background:var(--border);margin:0 8px;"></div>
+    <button onclick="ttGoToToday()" style="font-size:0.76rem;padding:5px 12px;border:1px solid var(--border);border-radius:8px;background:white;cursor:pointer;color:var(--navy);" title="Go to current week">Today</button>
+    <!-- Calendar jump: hidden input triggered by button -->
+    <div style="position:relative;">
+      <button onclick="document.getElementById('tt-week-picker').showPicker ? document.getElementById('tt-week-picker').showPicker() : document.getElementById('tt-week-picker').click()" style="font-size:0.76rem;padding:5px 12px;border:1px solid var(--border);border-radius:8px;background:white;cursor:pointer;color:var(--navy);" title="Jump to a specific date">📅 Jump</button>
+      <input type="date" id="tt-week-picker" style="position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;top:0;left:0;" onchange="ttJumpToDate(this.value)">
+    </div>
   </div>
 
   <!-- Timetable grid -->
@@ -1057,7 +1060,13 @@ let ttSlots = {};       // keyed "dayOfWeek_roomId_templateId" => slot row
 let ttAllTeachers = []; // cached
 let ttRooms = [];       // rooms in display order
 let ttEditing = null;   // { dayOfWeek, roomId, templateId }
-let ttCurrentWeekStart = null; // Date object (always a Monday)
+let ttCurrentWeekStart = (function() {
+  // Eagerly set to current week so the label is never "—"
+  const d = new Date();
+  const dow = d.getDay(); // 0=Sun
+  const diff = dow === 0 ? -6 : 1 - dow;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + diff);
+})();
 let ttHolidays = {};    // keyed "YYYY-MM-DD" => reason
 let ttHolidayEditing = null; // "YYYY-MM-DD" being edited
 
@@ -1112,8 +1121,6 @@ function ttJumpToDate(isoStr) {
 }
 
 async function loadTimetable() {
-  // Init week if first load
-  if (!ttCurrentWeekStart) ttCurrentWeekStart = ttGetMonday(new Date());
 
   // Update week navigator UI
   const weekISO = ttDateToISO(ttCurrentWeekStart);
@@ -3223,6 +3230,14 @@ function showPage(id, navEl) {
   if (id==='doubts') renderDoubtsAdmin();
   if (id==='my-profile') renderMyProfile();
   if (id==='timetable') {
+    // Update week label immediately (before async fetch) so it never shows "—"
+    const _lbl = document.getElementById('tt-week-label');
+    const _rng = document.getElementById('tt-week-range');
+    if (_lbl && ttCurrentWeekStart) {
+      const _sun = new Date(ttCurrentWeekStart); _sun.setDate(_sun.getDate() + 6);
+      _lbl.textContent = 'Week of ' + ttFmtDate(ttCurrentWeekStart);
+      _rng.textContent = ttWeekLabel(ttCurrentWeekStart);
+    }
     if (isTeacher) loadTeacherSchedule();
     else loadTimetable();
   }
