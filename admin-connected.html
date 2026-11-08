@@ -228,7 +228,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div><div class="pt">Students</div><div class="ps" id="students-sub">Loading…</div></div>
     <button class="btn btn-primary admin-only-nav" onclick="openModal('modal-add-student')">+ Add Student</button>
   </div>
-  <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th style="padding-left:20px">Student</th><th>Programs</th><th>Board</th><th>Parent Phone</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="students-tbody"><tr><td colspan="6"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
+  <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th style="padding-left:20px">Student</th><th>Roll No</th><th>Programs</th><th>Board</th><th>Parent Phone</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="students-tbody"><tr><td colspan="7"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
 </div>
 
 <!-- ATTENDANCE -->
@@ -876,7 +876,7 @@ async function handleLogout() { await sb.auth.signOut(); window.location.href='l
 
 // -- Load --
 async function loadStudents() {
-  const { data } = await sb.from('students').select('id, user_id, primary_board, current_class, parent_phone, created_at, users(*), enrollments(*, programs(*))').order('created_at', { ascending: false });
+  const { data } = await sb.from('students').select('id, user_id, primary_board, current_class, parent_phone, roll_number, created_at, users(*), enrollments(*, programs(*))').order('created_at', { ascending: false });
   allStudents = data || [];
   const sub = document.getElementById('students-sub');
   if (sub) sub.textContent = allStudents.length + ' enrolled students';
@@ -1285,18 +1285,19 @@ function renderStudents() {
   const sub = document.getElementById('students-sub');
   if (sub) sub.textContent = allStudents.length + ' enrolled students';
   if (!allStudents.length) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">No students enrolled yet.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No students enrolled yet.</td></tr>';
     return;
   }
   tbody.innerHTML = '';
   allStudents.forEach(function(s) {
     const name = s.users ? s.users.full_name : 'Unknown';
+    const roll = s.roll_number || '—';
     const prog = s.enrollments && s.enrollments.length ? s.enrollments.map(function(e){return e.programs?e.programs.name:'';}).filter(Boolean).join(', ') : '-';
     const board = s.primary_board || '-';
     const phone = s.parent_phone || '-';
     const joined = s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN') : '-';
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td style="padding-left:20px;font-weight:700">'+name+'</td><td>'+prog+'</td><td>'+board+'</td><td>'+phone+'</td><td style="color:var(--muted);font-size:0.82rem">'+joined+'</td><td></td>';
+    tr.innerHTML = '<td style="padding-left:20px;font-weight:700">'+name+'</td><td style="font-family:monospace;font-size:0.82rem;color:var(--muted)">'+roll+'</td><td>'+prog+'</td><td>'+board+'</td><td>'+phone+'</td><td style="color:var(--muted);font-size:0.82rem">'+joined+'</td><td></td>';
     if (adminData && adminData.role === 'admin') {
       const delBtn = document.createElement('button');
       delBtn.textContent = 'Remove';

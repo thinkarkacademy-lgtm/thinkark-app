@@ -814,9 +814,10 @@ function renderProfile() {
   const board = studentData.primary_board || '—';
   const classLabel = studentData.current_class ? 'Class ' + studentData.current_class : null;
   document.getElementById('prof-detail').textContent = `${classLabel ? classLabel + ' · ' : ''}${board} · ThinkArk Academy`;
-  document.getElementById('prof-tags').innerHTML = [classLabel, studentData.primary_board, ...programs].filter(Boolean).map(t=>`<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${t}</span>`).join('');
+  const rollTag = studentData.roll_number ? `<span style="background:rgba(201,168,76,0.25);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">Roll # ${studentData.roll_number}</span>` : '';
+  document.getElementById('prof-tags').innerHTML = rollTag + [classLabel, studentData.primary_board, ...programs].filter(Boolean).map(t=>`<span style="background:rgba(201,168,76,0.15);color:var(--gold);font-size:0.7rem;font-weight:700;padding:3px 10px;border-radius:10px;font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;">${t}</span>`).join('');
   document.getElementById('prof-details-list').innerHTML = [
-    ['Full Name', name], ['Email', studentData.email], ['Class', classLabel || '—'],
+    ['Roll Number', studentData.roll_number || '—'], ['Full Name', name], ['Email', studentData.email], ['Class', classLabel || '—'],
     ['Board', studentData.primary_board || '—'],
     ['Parent Name', studentData.parent_name||'—'], ['Parent Phone', studentData.parent_phone||'—'],
     ['Admission Date', studentData.admission_date ? new Date(studentData.admission_date).toLocaleDateString('en-IN') : '—']
