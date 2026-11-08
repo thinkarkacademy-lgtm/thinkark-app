@@ -478,47 +478,49 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
 <!-- TIMETABLE MANAGER -->
 <div class="page" id="page-timetable">
   <div class="ph">
-    <div><div class="pt">Timetable</div><div class="ps">Weekly class schedule</div></div>
+    <div><div class="pt">Timetable</div><div class="ps">Room-based weekly schedule</div></div>
     <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-      <select id="tt-class" onchange="loadTimetable()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:white;">
-        <option value="">Select Class</option>
-        <option value="7">Class 7</option><option value="8">Class 8</option>
-        <option value="9">Class 9</option><option value="10">Class 10</option>
-        <option value="11">Class 11</option><option value="12">Class 12</option>
-      </select>
-      <select id="tt-board" onchange="loadTimetable()" style="padding:7px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:white;">
-        <option value="CBSE">CBSE</option><option value="ICSE">ICSE</option>
-      </select>
+      <button class="btn" onclick="openTtRoomsModal()" style="font-size:0.8rem;padding:6px 14px;">⚙ Rooms</button>
+      <button class="btn" onclick="openCopyDayModal()" style="font-size:0.8rem;padding:6px 14px;" id="tt-copy-btn" disabled>⎘ Copy Day</button>
       <span id="tt-save-status" style="font-size:0.78rem;color:var(--muted);"></span>
     </div>
   </div>
 
-  <!-- Empty state -->
-  <div id="tt-empty" style="text-align:center;padding:56px 24px;background:white;border-radius:16px;border:1px solid var(--border);">
-    <div style="font-size:2.5rem;margin-bottom:12px;">📅</div>
-    <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;color:var(--navy);margin-bottom:6px;">Select a class and board to manage its timetable</div>
-    <div style="font-size:0.85rem;color:var(--muted);">Click any cell to assign a subject and teacher</div>
-  </div>
-
   <!-- Timetable grid -->
-  <div id="tt-grid-wrap" style="display:none;overflow-x:auto;">
-    <table id="tt-grid" style="width:100%;border-collapse:collapse;min-width:700px;background:white;border-radius:16px;overflow:hidden;border:1px solid var(--border);">
+  <div id="tt-grid-wrap" style="overflow-x:auto;">
+    <table id="tt-grid" style="border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;border:1px solid var(--border);font-size:0.78rem;">
       <thead id="tt-head"></thead>
       <tbody id="tt-body"></tbody>
     </table>
-    <div style="margin-top:10px;font-size:0.76rem;color:var(--muted);">Click any subject cell to edit · Break cells are locked · Changes save automatically</div>
+    <div style="margin-top:10px;font-size:0.74rem;color:var(--muted);">Click any cell to assign a class · A class spanning multiple slots will fill the rows automatically</div>
   </div>
 </div>
 
 <!-- Timetable slot edit modal -->
 <div class="modal-overlay" id="modal-tt-slot">
-  <div class="modal" style="max-width:420px;">
+  <div class="modal" style="max-width:440px;">
     <div class="modal-header"><span class="modal-title" id="tt-slot-title">Edit Slot</span><button class="modal-close" onclick="closeModal('modal-tt-slot')">✕</button></div>
     <div class="modal-body">
+      <div style="font-size:0.76rem;color:var(--muted);margin-bottom:14px;" id="tt-slot-info"></div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Class &amp; Board</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <select id="tt-slot-class" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+            <option value="">— Class —</option>
+            <option value="7">Class 7</option><option value="8">Class 8</option>
+            <option value="9">Class 9</option><option value="10">Class 10</option>
+            <option value="11">Class 11</option><option value="12">Class 12</option>
+          </select>
+          <select id="tt-slot-board" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+            <option value="">— Board —</option>
+            <option value="CBSE">CBSE</option><option value="ICSE">ICSE</option><option value="ISC">ISC</option><option value="Cambridge">Cambridge</option>
+          </select>
+        </div>
+      </div>
       <div style="margin-bottom:14px;">
         <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Subject</label>
         <select id="tt-slot-subject" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
-          <option value="">— Free Period —</option>
+          <option value="">— Select Subject —</option>
         </select>
       </div>
       <div style="margin-bottom:14px;">
@@ -527,27 +529,65 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
           <option value="">— Not Assigned —</option>
         </select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Start Time Override</label>
-          <input type="time" id="tt-slot-start" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;" placeholder="Leave blank for default">
-        </div>
-        <div>
-          <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">End Time Override</label>
-          <input type="time" id="tt-slot-end" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;" placeholder="Leave blank for default">
-        </div>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Duration (number of 15-min slots)</label>
+        <select id="tt-slot-span" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+          <option value="1">15 min (1 slot)</option>
+          <option value="2">30 min (2 slots)</option>
+          <option value="3">45 min (3 slots)</option>
+          <option value="4">60 min (4 slots)</option>
+          <option value="5">75 min (5 slots)</option>
+          <option value="6">90 min (6 slots)</option>
+          <option value="8">120 min (8 slots)</option>
+        </select>
       </div>
-      <div style="font-size:0.76rem;color:var(--muted);margin-bottom:14px;" id="tt-slot-default-times"></div>
       <div style="margin-bottom:4px;">
         <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Notes</label>
-        <input type="text" id="tt-slot-notes" placeholder="Optional notes..." style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+        <input type="text" id="tt-slot-notes" placeholder="e.g. PCM group, Revision..." style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
       </div>
     </div>
     <div class="modal-footer">
       <button class="btn" onclick="closeModal('modal-tt-slot')">Cancel</button>
-      <button class="btn btn-danger" id="tt-slot-clear-btn" onclick="clearTimetableSlot()" style="margin-right:auto;">Clear Slot</button>
+      <button class="btn btn-danger" id="tt-slot-clear-btn" onclick="clearTimetableSlot()" style="margin-right:auto;">Clear</button>
       <button class="btn btn-primary" onclick="saveTimetableSlot()">Save</button>
     </div>
+  </div>
+</div>
+
+<!-- Copy Day modal -->
+<div class="modal-overlay" id="modal-tt-copy">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header"><span class="modal-title">Copy Day</span><button class="modal-close" onclick="closeModal('modal-tt-copy')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem;color:var(--navy);margin-bottom:16px;">Copy all slots from one day to another. Existing slots on the target day will be <strong>replaced</strong>.</p>
+      <div style="margin-bottom:14px;">
+        <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">From Day</label>
+        <select id="tt-copy-from" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;"></select>
+      </div>
+      <div>
+        <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">To Day</label>
+        <select id="tt-copy-to" style="width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal('modal-tt-copy')">Cancel</button>
+      <button class="btn btn-primary" onclick="executeCopyDay()">Copy</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manage Rooms modal -->
+<div class="modal-overlay" id="modal-tt-rooms">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header"><span class="modal-title">Manage Rooms</span><button class="modal-close" onclick="closeModal('modal-tt-rooms')">✕</button></div>
+    <div class="modal-body">
+      <div id="tt-rooms-list" style="margin-bottom:16px;"></div>
+      <div style="display:flex;gap:8px;">
+        <input type="text" id="tt-new-room-name" placeholder="New room name..." style="flex:1;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
+        <button class="btn btn-primary" onclick="addRoom()" style="white-space:nowrap;">Add Room</button>
+      </div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-primary" onclick="closeModal('modal-tt-rooms');loadTimetable()">Done</button></div>
   </div>
 </div>
 
@@ -952,124 +992,173 @@ async function loadSubjects() {
 }
 
 // ═══════════════════════════════════════════════
-//  TIMETABLE MANAGER
+//  TIMETABLE MANAGER (room-based)
 // ═══════════════════════════════════════════════
-let ttTemplates = [];   // period_templates for current class+board
-let ttSlots = {};       // keyed "day_period_template_id" => slot row
-let ttAllTeachers = []; // cached from teachers table
-let ttEditing = null;   // { day, templateId, slotId? }
+let ttTemplates = [];   // period_templates: 24 × 15-min slots
+let ttSlots = {};       // keyed "day_roomId_templateId" => slot row
+let ttAllTeachers = []; // cached
+let ttRooms = [];       // rooms in display order
+let ttEditing = null;   // { day, roomId, templateId, slotId? }
 
-const TT_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-const TT_DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const TT_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const TT_DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat'];
+// Pastel colours per room index (cycles)
+const TT_ROOM_COLORS = [
+  'rgba(100,149,237,0.18)', // blue
+  'rgba(144,238,144,0.22)', // green
+  'rgba(255,180,100,0.22)', // orange
+  'rgba(216,191,216,0.28)', // purple
+  'rgba(200,200,200,0.22)'  // grey (Cabin)
+];
 
 async function loadTimetable() {
-  const cls = document.getElementById('tt-class').value;
-  const board = document.getElementById('tt-board').value;
-  const empty = document.getElementById('tt-empty');
-  const wrap = document.getElementById('tt-grid-wrap');
-  if (!cls) { empty.style.display=''; wrap.style.display='none'; return; }
-  empty.style.display='none'; wrap.style.display='';
   document.getElementById('tt-save-status').textContent = 'Loading…';
+  document.getElementById('tt-copy-btn').disabled = true;
 
-  // Load templates
-  const { data: tmpl } = await sb.from('period_templates')
-    .select('*').eq('class_level', parseInt(cls)).eq('board', board)
-    .order('period_number');
+  // Load rooms
+  const { data: rd } = await sb.from('rooms').select('*').eq('is_active', true).order('name');
+  ttRooms = rd || [];
+
+  // Load time slot templates
+  const { data: tmpl } = await sb.from('period_templates').select('*').order('sort_order');
   ttTemplates = tmpl || [];
 
-  // Load slots
-  const templateIds = ttTemplates.map(function(t){ return t.id; });
-  let slotsData = [];
-  if (templateIds.length) {
-    const { data: sd } = await sb.from('timetable_slots')
-      .select('*, subjects(id,name), teachers(id,full_name)')
-      .in('period_template_id', templateIds)
-      .eq('class_level', parseInt(cls)).eq('board', board).eq('is_active', true);
-    slotsData = sd || [];
-  }
+  // Load all slots
+  const { data: sd } = await sb.from('timetable_slots')
+    .select('*, subjects(id,name), teachers(id,full_name)')
+    .eq('is_active', true);
   ttSlots = {};
-  slotsData.forEach(function(s) {
-    ttSlots[s.day_of_week + '_' + s.period_template_id] = s;
+  (sd || []).forEach(function(s) {
+    const k = s.day_of_week + '_' + s.room_id + '_' + s.period_template_id;
+    ttSlots[k] = s;
   });
 
-  // Load teachers if not already
+  // Load teachers
   if (!ttAllTeachers.length) {
-    const { data: td } = await sb.from('teachers').select('id, full_name, subjects').order('full_name');
+    const { data: td } = await sb.from('teachers').select('id, full_name').order('full_name');
     ttAllTeachers = td || [];
   }
 
   renderTimetableGrid();
   document.getElementById('tt-save-status').textContent = '';
+  document.getElementById('tt-copy-btn').disabled = false;
 }
 
 function renderTimetableGrid() {
   const head = document.getElementById('tt-head');
   const body = document.getElementById('tt-body');
+  if (!ttRooms.length || !ttTemplates.length) {
+    head.innerHTML = ''; body.innerHTML = '<tr><td colspan="2" style="padding:40px;text-align:center;color:var(--muted);">No rooms configured. Click ⚙ Rooms to add rooms.</td></tr>';
+    return;
+  }
 
-  // Header row: empty + 7 days
-  head.innerHTML = '<tr>' +
-    '<th style="padding:10px 14px;text-align:left;font-size:0.75rem;font-weight:700;color:var(--muted);background:#f8f7f4;border-bottom:1px solid var(--border);min-width:110px;">Time</th>' +
-    TT_DAY_SHORT.map(function(d,i) {
-      return '<th style="padding:10px 8px;text-align:center;font-size:0.75rem;font-weight:700;color:var(--navy);background:#f8f7f4;border-bottom:1px solid var(--border);border-left:1px solid var(--border);min-width:100px;">' + d + '</th>';
-    }).join('') + '</tr>';
+  const nRooms = ttRooms.length;
 
-  // Body rows: one per period template
-  body.innerHTML = ttTemplates.map(function(tmpl) {
-    const start = tmpl.default_start_time.slice(0,5);
-    const end = tmpl.default_end_time.slice(0,5);
-    const timeLabel = start + ' – ' + end;
-    const isBreak = tmpl.is_break;
-
-    const rowBg = isBreak ? 'background:rgba(201,168,76,0.07);' : '';
-    const cells = TT_DAYS.map(function(day, idx) {
-      const dayNum = idx + 1;
-      const key = dayNum + '_' + tmpl.id;
-      const slot = ttSlots[key];
-      if (isBreak) {
-        return '<td style="text-align:center;padding:8px 4px;border-left:1px solid var(--border);font-size:0.72rem;color:var(--muted);font-style:italic;">' + tmpl.label + '</td>';
-      }
-      let cellContent = '<div style="font-size:0.72rem;color:var(--muted);font-style:italic;">Free</div>';
-      let cellBg = 'background:white;cursor:pointer;';
-      if (slot) {
-        const subName = slot.subjects ? slot.subjects.name : '—';
-        const tchName = slot.teachers ? slot.teachers.full_name.split(' ').slice(-1)[0] : '';
-        cellContent = '<div style="font-size:0.8rem;font-weight:700;color:var(--navy);">' + subName + '</div>' +
-          (tchName ? '<div style="font-size:0.68rem;color:var(--muted);margin-top:2px;">' + tchName + '</div>' : '');
-        cellBg = 'background:rgba(14,65,101,0.05);cursor:pointer;';
-      }
-      return '<td onclick="openTtSlotModal(' + dayNum + ',\'' + tmpl.id + '\')" style="padding:8px 6px;text-align:center;border-left:1px solid var(--border);' + cellBg + 'transition:background 0.15s;" onmouseover="this.style.background=\'rgba(14,65,101,0.1)\'" onmouseout="this.style.background=\'' + (slot ? 'rgba(14,65,101,0.05)' : 'white') + '\'">' + cellContent + '</td>';
+  // ── Header: Row 1 = Time + Day groups; Row 2 = Room sub-columns ──
+  const dayHeaders = TT_DAY_SHORT.map(function(d, di) {
+    const dayBg = di % 2 === 0 ? '#1a4f7a' : '#1e5f8e';
+    return '<th colspan="' + nRooms + '" style="padding:8px 4px;text-align:center;font-size:0.76rem;font-weight:700;color:white;background:' + dayBg + ';border-left:2px solid rgba(255,255,255,0.3);letter-spacing:0.04em;">' + d.toUpperCase() + '</th>';
+  }).join('');
+  const roomSubHeaders = TT_DAYS.map(function(d, di) {
+    return ttRooms.map(function(r, ri) {
+      const borderStyle = ri === 0 ? 'border-left:2px solid rgba(255,255,255,0.3);' : 'border-left:1px solid var(--border);';
+      return '<th style="padding:5px 4px;text-align:center;font-size:0.68rem;font-weight:600;color:var(--navy);background:#f0f4f8;' + borderStyle + 'min-width:72px;white-space:nowrap;">' + r.name + '</th>';
     }).join('');
+  }).join('');
 
-    return '<tr style="border-bottom:1px solid var(--border);' + rowBg + '">' +
-      '<td style="padding:10px 14px;font-size:0.76rem;color:var(--muted);">' +
-        '<div style="font-weight:700;color:var(--navy);font-size:0.8rem;">' + (isBreak ? '' : tmpl.label) + '</div>' +
-        '<div>' + timeLabel + '</div>' +
-        (isBreak ? '<div style="font-size:0.7rem;font-style:italic;">' + tmpl.label + '</div>' : '') +
-      '</td>' + cells + '</tr>';
+  head.innerHTML =
+    '<tr><th rowspan="2" style="padding:8px 10px;text-align:left;font-size:0.72rem;font-weight:700;color:var(--muted);background:#f8f7f4;border-bottom:1px solid var(--border);min-width:95px;white-space:nowrap;">Time</th>' + dayHeaders + '</tr>' +
+    '<tr>' + roomSubHeaders + '</tr>';
+
+  // ── Body: one row per template, cells skip rows already covered by span ──
+  // Build a "blocked" map: "tmplIdx_dayIdx_roomIdx" = true if covered by a spanning slot above
+  const blocked = {};
+  // First pass: scan all slots to find spans
+  ttTemplates.forEach(function(tmpl, ti) {
+    TT_DAYS.forEach(function(d, di) {
+      const dayNum = di + 1;
+      ttRooms.forEach(function(room, ri) {
+        const k = dayNum + '_' + room.id + '_' + tmpl.id;
+        const slot = ttSlots[k];
+        if (slot && slot.span_slots > 1) {
+          // mark subsequent rows as blocked
+          for (let s = 1; s < slot.span_slots; s++) {
+            if (ttTemplates[ti + s]) {
+              blocked['' + (ti+s) + '_' + di + '_' + ri] = true;
+            }
+          }
+        }
+      });
+    });
+  });
+
+  body.innerHTML = ttTemplates.map(function(tmpl, ti) {
+    const cells = [];
+    TT_DAYS.forEach(function(d, di) {
+      const dayNum = di + 1;
+      ttRooms.forEach(function(room, ri) {
+        const blockKey = '' + ti + '_' + di + '_' + ri;
+        if (blocked[blockKey]) return; // skip — parent cell has rowspan
+        const k = dayNum + '_' + room.id + '_' + tmpl.id;
+        const slot = ttSlots[k];
+        const span = slot && slot.span_slots > 1 ? slot.span_slots : 1;
+        const rowspanAttr = span > 1 ? ' rowspan="' + span + '"' : '';
+        const borderStyle = ri === 0 ? 'border-left:2px solid var(--border);' : 'border-left:1px solid var(--border);';
+        const roomColor = TT_ROOM_COLORS[ri % TT_ROOM_COLORS.length];
+        let cellBg = 'background:white;';
+        let cellContent = '<div style="font-size:0.65rem;color:#ccc;">+</div>';
+        if (slot) {
+          const subName = slot.subjects ? slot.subjects.name : '—';
+          const tchLast = slot.teachers ? slot.teachers.full_name.split(' ').slice(-1)[0] : '';
+          const cls = slot.class_level ? 'Cl ' + slot.class_level : '';
+          const brd = slot.board || '';
+          const noteStr = slot.notes ? '<div style="font-size:0.6rem;color:var(--muted);font-style:italic;margin-top:1px;">' + slot.notes + '</div>' : '';
+          cellBg = 'background:' + roomColor + ';';
+          cellContent =
+            '<div style="font-size:0.72rem;font-weight:700;color:var(--navy);line-height:1.2;">' + subName + '</div>' +
+            (cls ? '<div style="font-size:0.65rem;color:#555;margin-top:1px;">' + cls + (brd ? ' ' + brd : '') + '</div>' : '') +
+            (tchLast ? '<div style="font-size:0.62rem;color:var(--muted);margin-top:1px;">(' + tchLast + ')</div>' : '') +
+            noteStr;
+        }
+        cells.push('<td' + rowspanAttr + ' onclick="openTtSlotModal(' + dayNum + ',\'' + room.id + '\',\'' + tmpl.id + '\')" style="padding:4px 5px;text-align:center;vertical-align:middle;cursor:pointer;' + borderStyle + cellBg + 'transition:filter 0.12s;" onmouseover="this.style.filter=\'brightness(0.93)\'" onmouseout="this.style.filter=\'none\'">' + cellContent + '</td>');
+      });
+    });
+    return '<tr style="border-bottom:1px solid #eee;height:28px;">' +
+      '<td style="padding:4px 10px;font-size:0.7rem;font-weight:600;color:var(--navy);white-space:nowrap;background:#f8f7f4;border-right:1px solid var(--border);">' + tmpl.label + '</td>' +
+      cells.join('') + '</tr>';
   }).join('');
 }
 
-function openTtSlotModal(dayNum, templateId) {
+function openTtSlotModal(dayNum, roomId, templateId) {
   const tmpl = ttTemplates.find(function(t){ return t.id === templateId; });
-  if (!tmpl || tmpl.is_break) return;
-  ttEditing = { day: dayNum, templateId: templateId };
-  const slot = ttSlots[dayNum + '_' + templateId];
+  const room = ttRooms.find(function(r){ return r.id === roomId; });
+  if (!tmpl || !room) return;
+  ttEditing = { day: dayNum, roomId: roomId, templateId: templateId };
+  const slot = ttSlots[dayNum + '_' + roomId + '_' + templateId];
 
-  document.getElementById('tt-slot-title').textContent = TT_DAYS[dayNum-1] + ' — ' + tmpl.label;
-  document.getElementById('tt-slot-default-times').textContent =
-    'Default: ' + tmpl.default_start_time.slice(0,5) + ' – ' + tmpl.default_end_time.slice(0,5);
+  document.getElementById('tt-slot-title').textContent = TT_DAYS[dayNum-1] + ' · ' + room.name + ' · ' + tmpl.label;
+  document.getElementById('tt-slot-info').textContent = tmpl.default_start_time.slice(0,5) + ' – ' + tmpl.default_end_time.slice(0,5);
 
-  // Populate subjects
+  // Subjects
   const subSel = document.getElementById('tt-slot-subject');
-  subSel.innerHTML = '<option value="">— Free Period —</option>';
+  subSel.innerHTML = '<option value="">— Select Subject —</option>';
+  const seen = new Set();
   allSubjects.forEach(function(s) {
+    if (seen.has(s.name)) return; seen.add(s.name);
     const opt = document.createElement('option');
     opt.value = s.id; opt.textContent = s.name;
     if (slot && slot.subject_id === s.id) opt.selected = true;
     subSel.appendChild(opt);
   });
+  KNOWN_SUBJECTS.forEach(function(name) {
+    if (seen.has(name)) return; seen.add(name);
+    const opt = document.createElement('option');
+    opt.value = name; opt.textContent = name;
+    if (slot && slot.notes === name) opt.selected = true;
+    subSel.appendChild(opt);
+  });
 
-  // Populate teachers
+  // Teachers
   const tchSel = document.getElementById('tt-slot-teacher');
   tchSel.innerHTML = '<option value="">— Not Assigned —</option>';
   ttAllTeachers.forEach(function(t) {
@@ -1079,8 +1168,10 @@ function openTtSlotModal(dayNum, templateId) {
     tchSel.appendChild(opt);
   });
 
-  document.getElementById('tt-slot-start').value = slot && slot.start_time_override ? slot.start_time_override.slice(0,5) : '';
-  document.getElementById('tt-slot-end').value = slot && slot.end_time_override ? slot.end_time_override.slice(0,5) : '';
+  // Class & board
+  document.getElementById('tt-slot-class').value = slot ? (slot.class_level || '') : '';
+  document.getElementById('tt-slot-board').value = slot ? (slot.board || '') : '';
+  document.getElementById('tt-slot-span').value = slot ? (slot.span_slots || 1) : 1;
   document.getElementById('tt-slot-notes').value = slot ? (slot.notes || '') : '';
 
   document.getElementById('tt-slot-clear-btn').style.display = slot ? '' : 'none';
@@ -1089,24 +1180,24 @@ function openTtSlotModal(dayNum, templateId) {
 
 async function saveTimetableSlot() {
   if (!ttEditing) return;
-  const cls = parseInt(document.getElementById('tt-class').value);
-  const board = document.getElementById('tt-board').value;
   const subjectId = document.getElementById('tt-slot-subject').value || null;
   const teacherId = document.getElementById('tt-slot-teacher').value || null;
-  const startOv = document.getElementById('tt-slot-start').value || null;
-  const endOv = document.getElementById('tt-slot-end').value || null;
+  const cls = parseInt(document.getElementById('tt-slot-class').value) || null;
+  const board = document.getElementById('tt-slot-board').value || null;
+  const span = parseInt(document.getElementById('tt-slot-span').value) || 1;
   const notes = document.getElementById('tt-slot-notes').value.trim() || null;
-  const key = ttEditing.day + '_' + ttEditing.templateId;
+  const key = ttEditing.day + '_' + ttEditing.roomId + '_' + ttEditing.templateId;
   const existing = ttSlots[key];
 
   document.getElementById('tt-save-status').textContent = 'Saving…';
   const payload = {
-    class_level: cls, board: board,
     day_of_week: ttEditing.day,
+    room_id: ttEditing.roomId,
     period_template_id: ttEditing.templateId,
     subject_id: subjectId, teacher_id: teacherId,
-    start_time_override: startOv, end_time_override: endOv,
-    notes: notes, is_active: true, updated_at: new Date().toISOString()
+    class_level: cls, board: board,
+    span_slots: span, notes: notes,
+    is_active: true, updated_at: new Date().toISOString()
   };
   let err;
   if (existing) {
@@ -1116,7 +1207,7 @@ async function saveTimetableSlot() {
     const { error } = await sb.from('timetable_slots').insert(payload);
     err = error;
   }
-  if (err) { toast('Error saving slot: ' + err.message, 'error'); document.getElementById('tt-save-status').textContent = ''; return; }
+  if (err) { toast('Error: ' + err.message, 'error'); document.getElementById('tt-save-status').textContent = ''; return; }
   closeModal('modal-tt-slot');
   await loadTimetable();
   toast('Slot saved', 'success');
@@ -1124,7 +1215,7 @@ async function saveTimetableSlot() {
 
 async function clearTimetableSlot() {
   if (!ttEditing) return;
-  const key = ttEditing.day + '_' + ttEditing.templateId;
+  const key = ttEditing.day + '_' + ttEditing.roomId + '_' + ttEditing.templateId;
   const existing = ttSlots[key];
   if (!existing) { closeModal('modal-tt-slot'); return; }
   document.getElementById('tt-save-status').textContent = 'Clearing…';
@@ -1134,68 +1225,105 @@ async function clearTimetableSlot() {
   await loadTimetable();
   toast('Slot cleared', 'success');
 }
+
+function openCopyDayModal() {
+  const fromSel = document.getElementById('tt-copy-from');
+  const toSel = document.getElementById('tt-copy-to');
+  fromSel.innerHTML = toSel.innerHTML = '';
+  TT_DAYS.forEach(function(d, i) {
+    const opt1 = document.createElement('option'); opt1.value = i+1; opt1.textContent = d;
+    const opt2 = document.createElement('option'); opt2.value = i+1; opt2.textContent = d;
+    fromSel.appendChild(opt1); toSel.appendChild(opt2);
+  });
+  toSel.value = '2'; // default: copy Mon → Tue
+  openModal('modal-tt-copy');
+}
+
+async function executeCopyDay() {
+  const fromDay = parseInt(document.getElementById('tt-copy-from').value);
+  const toDay = parseInt(document.getElementById('tt-copy-to').value);
+  if (fromDay === toDay) { toast('Source and target are the same day', 'error'); return; }
+  document.getElementById('tt-save-status').textContent = 'Copying…';
+  closeModal('modal-tt-copy');
+
+  // Delete all slots for target day
+  await sb.from('timetable_slots').delete().eq('day_of_week', toDay);
+
+  // Get all slots for source day
+  const { data: sourceSlots } = await sb.from('timetable_slots')
+    .select('*').eq('day_of_week', fromDay).eq('is_active', true);
+
+  if (sourceSlots && sourceSlots.length) {
+    const newSlots = sourceSlots.map(function(s) {
+      return {
+        day_of_week: toDay,
+        room_id: s.room_id,
+        period_template_id: s.period_template_id,
+        subject_id: s.subject_id,
+        teacher_id: s.teacher_id,
+        class_level: s.class_level,
+        board: s.board,
+        span_slots: s.span_slots,
+        notes: s.notes,
+        is_active: true
+      };
+    });
+    const { error } = await sb.from('timetable_slots').insert(newSlots);
+    if (error) { toast('Copy error: ' + error.message, 'error'); document.getElementById('tt-save-status').textContent = ''; return; }
+  }
+  await loadTimetable();
+  toast(TT_DAYS[fromDay-1] + ' → ' + TT_DAYS[toDay-1] + ' copied', 'success');
+}
+
+// ── Room management ──
+async function openTtRoomsModal() {
+  const { data: rd } = await sb.from('rooms').select('*').order('name');
+  const list = document.getElementById('tt-rooms-list');
+  list.innerHTML = (rd || []).map(function(r) {
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">' +
+      '<span style="flex:1;font-size:0.88rem;">' + r.name + '</span>' +
+      (r.is_active
+        ? '<button class="btn" onclick="toggleRoom(\'' + r.id + '\',false)" style="font-size:0.72rem;padding:4px 10px;color:var(--muted);">Hide</button>'
+        : '<button class="btn btn-primary" onclick="toggleRoom(\'' + r.id + '\',true)" style="font-size:0.72rem;padding:4px 10px;">Show</button>') +
+      '<button class="btn btn-danger" onclick="deleteRoom(\'' + r.id + '\')" style="font-size:0.72rem;padding:4px 10px;">✕</button>' +
+      '</div>';
+  }).join('') || '<p style="color:var(--muted);font-size:0.85rem;">No rooms yet.</p>';
+  openModal('modal-tt-rooms');
+}
+
+async function addRoom() {
+  const name = document.getElementById('tt-new-room-name').value.trim();
+  if (!name) return;
+  const { error } = await sb.from('rooms').insert({ name: name, is_active: true });
+  if (error) { toast('Error: ' + error.message, 'error'); return; }
+  document.getElementById('tt-new-room-name').value = '';
+  await openTtRoomsModal(); // refresh list
+  toast('Room added', 'success');
+}
+
+async function toggleRoom(id, active) {
+  await sb.from('rooms').update({ is_active: active }).eq('id', id);
+  await openTtRoomsModal();
+}
+
+async function deleteRoom(id) {
+  if (!confirm('Delete this room? All its timetable slots will also be deleted.')) return;
+  await sb.from('rooms').delete().eq('id', id);
+  await openTtRoomsModal();
+  toast('Room deleted', 'success');
+}
+
 async function loadTeacherSchedule() {
-  // For teacher role: show read-only view of their slots across all classes
+  // For teacher role: show read-only view of their slots
   const wrap = document.getElementById('tt-grid-wrap');
-  const empty = document.getElementById('tt-empty');
   const ph = document.querySelector('#page-timetable .ph div:last-child');
-  if (ph) ph.style.display = 'none'; // hide class/board selector for teachers
+  if (ph) ph.style.display = 'none';
 
   const td = adminData._teacherData;
-  if (!td) { empty.style.display=''; wrap.style.display='none'; return; }
+  if (!td) { wrap.style.display='none'; return; }
 
-  empty.style.display='none'; wrap.style.display='';
   document.getElementById('tt-save-status').textContent = 'Loading your schedule…';
-
-  // Fetch all slots for this teacher
-  const { data: slots } = await sb.from('timetable_slots')
-    .select('*, period_templates(*), subjects(name)')
-    .eq('teacher_id', td.id).eq('is_active', true);
-
-  if (!slots || !slots.length) {
-    wrap.style.display='none'; empty.style.display='';
-    empty.querySelector('div:nth-child(2)').textContent = 'No schedule assigned yet';
-    empty.querySelector('div:nth-child(3)').textContent = 'Ask an admin to assign your timetable slots';
-    document.getElementById('tt-save-status').textContent = '';
-    return;
-  }
-
-  // Build a combined grid: rows = periods grouped by time, cols = days
-  // Group by time band across all classes
-  const periodMap = {}; // "HH:MM-HH:MM" => { label, periods[] }
-  slots.forEach(function(s) {
-    const tmpl = s.period_templates;
-    if (!tmpl || tmpl.is_break) return;
-    const start = (s.start_time_override || tmpl.default_start_time).slice(0,5);
-    const end = (s.end_time_override || tmpl.default_end_time).slice(0,5);
-    const key = start + '-' + end;
-    if (!periodMap[key]) periodMap[key] = { start, end, label: tmpl.label, slots: {} };
-    periodMap[key].slots[s.day_of_week] = s;
-  });
-
-  const periods = Object.values(periodMap).sort(function(a,b){ return a.start.localeCompare(b.start); });
-
-  const head = document.getElementById('tt-head');
-  const body = document.getElementById('tt-body');
-  head.innerHTML = '<tr><th style="padding:10px 14px;text-align:left;font-size:0.75rem;font-weight:700;color:var(--muted);background:#f8f7f4;border-bottom:1px solid var(--border);min-width:100px;">Time</th>' +
-    TT_DAY_SHORT.map(function(d){ return '<th style="padding:10px 8px;text-align:center;font-size:0.75rem;font-weight:700;color:var(--navy);background:#f8f7f4;border-bottom:1px solid var(--border);border-left:1px solid var(--border);min-width:100px;">' + d + '</th>'; }).join('') + '</tr>';
-
-  body.innerHTML = periods.map(function(p) {
-    const cells = [1,2,3,4,5,6,7].map(function(day) {
-      const s = p.slots[day];
-      if (!s) return '<td style="padding:8px 6px;text-align:center;border-left:1px solid var(--border);"><div style="font-size:0.72rem;color:var(--muted);">—</div></td>';
-      return '<td style="padding:8px 6px;text-align:center;border-left:1px solid var(--border);background:rgba(14,65,101,0.05);">' +
-        '<div style="font-size:0.8rem;font-weight:700;color:var(--navy);">' + (s.subjects ? s.subjects.name : '—') + '</div>' +
-        '<div style="font-size:0.68rem;color:var(--muted);margin-top:2px;">Class ' + s.class_level + ' ' + s.board + '</div>' +
-        '</td>';
-    }).join('');
-    return '<tr style="border-bottom:1px solid var(--border);">' +
-      '<td style="padding:10px 14px;font-size:0.76rem;color:var(--muted);">' +
-        '<div style="font-weight:700;color:var(--navy);font-size:0.8rem;">' + p.label + '</div>' +
-        '<div>' + p.start + ' – ' + p.end + '</div>' +
-      '</td>' + cells + '</tr>';
-  }).join('');
-
+  await loadTimetable(); // reuse same grid — slots show class info per cell
   document.getElementById('tt-save-status').textContent = '';
 }
 // ═══════════════════════════════════════════════
@@ -2843,7 +2971,7 @@ function showPage(id, navEl) {
   if (id==='my-profile') renderMyProfile();
   if (id==='timetable') {
     if (isTeacher) loadTeacherSchedule();
-    // For admin: just show selector, no auto-load
+    else loadTimetable();
   }
 }
 
