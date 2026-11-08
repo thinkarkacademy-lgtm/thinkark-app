@@ -228,6 +228,20 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <div><div class="pt">Students</div><div class="ps" id="students-sub">Loading…</div></div>
     <button class="btn btn-primary admin-only-nav" onclick="openModal('modal-add-student')">+ Add Student</button>
   </div>
+  <div class="card" style="padding:12px 16px;margin-bottom:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <select id="sf-class" onchange="renderStudents()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:var(--white);color:var(--navy);cursor:pointer">
+      <option value="">All Classes</option>
+      <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
+      <option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option>
+    </select>
+    <select id="sf-board" onchange="renderStudents()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:var(--white);color:var(--navy);cursor:pointer">
+      <option value="">All Boards</option>
+      <option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option>
+    </select>
+    <input id="sf-search" type="text" placeholder="Search by name…" oninput="renderStudents()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;min-width:180px">
+    <button onclick="document.getElementById('sf-class').value='';document.getElementById('sf-board').value='';document.getElementById('sf-search').value='';renderStudents();" style="padding:6px 10px;background:none;border:1px solid var(--border);border-radius:8px;font-size:0.78rem;color:var(--muted);cursor:pointer">✕ Clear</button>
+    <span id="students-count" style="margin-left:auto;font-size:0.78rem;color:var(--muted)"></span>
+  </div>
   <div class="card" style="padding:0;overflow:hidden;"><table class="tbl"><thead><tr><th style="padding-left:20px">Student</th><th>Roll No</th><th>Programs</th><th>Board</th><th>Parent Phone</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="students-tbody"><tr><td colspan="7"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
 </div>
 
@@ -1318,12 +1332,31 @@ function renderStudents() {
   if (!tbody) return;
   const sub = document.getElementById('students-sub');
   if (sub) sub.textContent = allStudents.length + ' enrolled students';
-  if (!allStudents.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No students enrolled yet.</td></tr>';
+
+  const sfClass = (document.getElementById('sf-class')||{}).value || '';
+  const sfBoard = (document.getElementById('sf-board')||{}).value || '';
+  const sfSearch = ((document.getElementById('sf-search')||{}).value || '').toLowerCase();
+
+  let list = allStudents.filter(function(s) {
+    if (sfClass && String(s.current_class) !== sfClass) return false;
+    if (sfBoard && (s.primary_board || '') !== sfBoard) return false;
+    if (sfSearch) {
+      const name = s.users ? (s.users.full_name || '').toLowerCase() : '';
+      const roll = (s.roll_number || '').toLowerCase();
+      if (!name.includes(sfSearch) && !roll.includes(sfSearch)) return false;
+    }
+    return true;
+  });
+
+  const countEl = document.getElementById('students-count');
+  if (countEl) countEl.textContent = list.length + ' of ' + allStudents.length + ' students';
+
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No students match the filter.</td></tr>';
     return;
   }
   tbody.innerHTML = '';
-  allStudents.forEach(function(s) {
+  list.forEach(function(s) {
     const name = s.users ? s.users.full_name : 'Unknown';
     const roll = s.roll_number || '—';
     const prog = s.enrollments && s.enrollments.length ? s.enrollments.map(function(e){return e.programs?e.programs.name:'';}).filter(Boolean).join(', ') : '-';
