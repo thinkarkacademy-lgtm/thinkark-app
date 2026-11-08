@@ -1163,15 +1163,27 @@ async function loadTimetable() {
   if (picker) picker.value = weekISO;
   document.getElementById('tt-save-status').textContent = 'Loading…';
 
-  // Load rooms (once per session)
-  if (!ttRooms.length) {
-    const { data: rd } = await sb.from('rooms').select('*').eq('is_active', true).order('name');
-    ttRooms = rd || [];
+  // Load rooms — retry once on failure (auth session may not be ready on first open)
+  let { data: rd, error: rdErr } = await sb.from('rooms').select('*').eq('is_active', true).order('name');
+  if ((rdErr || !rd) && !ttRooms.length) {
+    console.warn('rooms fetch failed, retrying…', rdErr);
+    await new Promise(r => setTimeout(r, 600));
+    const retry = await sb.from('rooms').select('*').eq('is_active', true).order('name');
+    rd = retry.data; rdErr = retry.error;
   }
+  if (rdErr) { console.error('rooms fetch error', rdErr); }
+  if (rd && rd.length) ttRooms = rd;
 
-  // Load time templates (once per session)
+  // Load time templates — retry once on failure
   if (!ttTemplates.length) {
-    const { data: tmpl } = await sb.from('period_templates').select('*').order('sort_order');
+    let { data: tmpl, error: tmplErr } = await sb.from('period_templates').select('*').order('sort_order');
+    if ((tmplErr || !tmpl) && !ttTemplates.length) {
+      console.warn('period_templates fetch failed, retrying…', tmplErr);
+      await new Promise(r => setTimeout(r, 400));
+      const retry = await sb.from('period_templates').select('*').order('sort_order');
+      tmpl = retry.data; tmplErr = retry.error;
+    }
+    if (tmplErr) { console.error('period_templates fetch error', tmplErr); }
     ttTemplates = tmpl || [];
   }
 
@@ -1206,6 +1218,7 @@ async function loadTimetable() {
 function renderTimetableGrid() {
   const head = document.getElementById('tt-head');
   const body = document.getElementById('tt-body');
+  if (!head || !body) { console.warn('renderTimetableGrid: DOM not ready, retrying…'); setTimeout(renderTimetableGrid, 300); return; }
   if (!ttRooms.length || !ttTemplates.length) {
     head.innerHTML = ''; body.innerHTML = '<tr><td colspan="2" style="padding:40px;text-align:center;color:var(--muted);">No rooms configured. Click ⚙ Rooms to add rooms.</td></tr>';
     return;
