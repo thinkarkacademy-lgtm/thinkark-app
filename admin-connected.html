@@ -1286,13 +1286,33 @@ function renderTimetableGrid() {
             (tchLast ? '<div style="font-size:0.62rem;color:var(--muted);margin-top:1px;">(' + tchLast + ')</div>' : '') +
             noteStr;
         }
-        cells.push('<td' + rowspanAttr + ' onclick="openTtSlotModal(' + dayNum + ',\'' + room.id + '\',\'' + tmpl.id + '\')" style="padding:4px 5px;text-align:center;vertical-align:middle;cursor:pointer;' + borderStyle + cellBg + 'transition:filter 0.12s;" onmouseover="this.style.filter=\'brightness(0.93)\'" onmouseout="this.style.filter=\'none\'">' + cellContent + '</td>');
+        cells.push('<td' + rowspanAttr + ' data-ti="' + ti + '" onclick="openTtSlotModal(' + dayNum + ',\'' + room.id + '\',\'' + tmpl.id + '\')" style="padding:4px 5px;text-align:center;vertical-align:middle;cursor:pointer;' + borderStyle + cellBg + 'transition:filter 0.12s;">' + cellContent + '</td>');
       });
     });
-    return '<tr style="border-bottom:1px solid #eee;height:28px;">' +
-      '<td style="position:sticky;left:0;z-index:2;padding:4px 10px;font-size:0.7rem;font-weight:600;color:var(--navy);white-space:nowrap;background:#f8f7f4;border-right:2px solid var(--border);">' + tmpl.label + '</td>' +
+    return '<tr data-ti="' + ti + '" style="border-bottom:1px solid #eee;height:28px;">' +
+      '<td class="tt-time-cell" data-ti="' + ti + '" style="position:sticky;left:0;z-index:2;padding:4px 10px;font-size:0.7rem;font-weight:600;color:var(--navy);white-space:nowrap;background:#f8f7f4;border-right:2px solid var(--border);transition:background 0.12s;">' + tmpl.label + '</td>' +
       cells.join('') + '</tr>';
   }).join('');
+
+  // Wire row-hover: highlight slot cells + time cell together
+  const tbody = document.getElementById('tt-body');
+  if (tbody) {
+    tbody.onmouseover = function(e) {
+      const td = e.target.closest('td[data-ti]');
+      if (!td) return;
+      const ti = td.dataset.ti;
+      // Dim all slot cells in this row, brighten time cell
+      tbody.querySelectorAll('td[data-ti="' + ti + '"]:not(.tt-time-cell)').forEach(function(c){ c.style.filter='brightness(0.91)'; });
+      tbody.querySelectorAll('td.tt-time-cell[data-ti="' + ti + '"]').forEach(function(c){ c.style.background='#dde8f0'; c.style.color='#0e4165'; });
+    };
+    tbody.onmouseout = function(e) {
+      const td = e.target.closest('td[data-ti]');
+      if (!td) return;
+      const ti = td.dataset.ti;
+      tbody.querySelectorAll('td[data-ti="' + ti + '"]:not(.tt-time-cell)').forEach(function(c){ c.style.filter=''; });
+      tbody.querySelectorAll('td.tt-time-cell[data-ti="' + ti + '"]').forEach(function(c){ c.style.background='#f8f7f4'; c.style.color=''; });
+    };
+  }
 }
 
 function openTtSlotModal(dayNum, roomId, templateId) {
