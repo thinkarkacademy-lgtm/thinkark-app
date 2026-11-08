@@ -591,6 +591,40 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
   </div>
 </div>
 
+<!-- Edit Student -->
+<div class="modal-overlay" id="modal-edit-student">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">Edit Student <button class="modal-close" onclick="closeModal('modal-edit-student')">✕</button></div>
+    <input type="hidden" id="es-id">
+    <input type="hidden" id="es-user-id">
+    <div style="background:rgba(26,46,90,0.05);border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:0.78rem;color:var(--muted)">
+      Roll No: <strong id="es-roll" style="color:var(--navy);font-family:monospace"></strong>
+    </div>
+    <div class="form-row fr2">
+      <div class="fgroup"><label>Full Name</label><input id="es-name" type="text" placeholder="Student's full name"></div>
+      <div class="fgroup"><label>Phone</label><input id="es-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+    </div>
+    <div class="form-row fr3">
+      <div class="fgroup"><label>Class</label><select id="es-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option></select></div>
+      <div class="fgroup"><label>Board</label><select id="es-board"><option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option></select></div>
+      <div class="fgroup"><label>Competitive Exam</label><select id="es-comp"><option value="">None</option><option>JEE</option><option>NEET</option><option>CUET</option><option>CLAT</option><option>IPMAT</option></select></div>
+    </div>
+    <div class="form-row fr2">
+      <div class="fgroup"><label>Parent Name</label><input id="es-pname" type="text" placeholder="Parent / Guardian name"></div>
+      <div class="fgroup"><label>Parent Phone</label><input id="es-pphone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+    </div>
+    <div class="fgroup" style="margin-top:4px"><label>Date of Birth</label><input id="es-dob" type="date"></div>
+    <div style="border-top:1px solid var(--border);margin:16px 0 12px;padding-top:12px;">
+      <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Reset Password (optional)</div>
+      <div class="fgroup"><input id="es-pw" type="password" placeholder="Leave blank to keep current password"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-edit-student')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditStudent()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <!-- Upload Content -->
 <div class="modal-overlay" id="modal-upload">
   <div class="modal" onclick="event.stopPropagation()" style="max-width:660px;">
@@ -1299,10 +1333,15 @@ function renderStudents() {
     const tr = document.createElement('tr');
     tr.innerHTML = '<td style="padding-left:20px;font-weight:700">'+name+'</td><td style="font-family:monospace;font-size:0.82rem;color:var(--muted)">'+roll+'</td><td>'+prog+'</td><td>'+board+'</td><td>'+phone+'</td><td style="color:var(--muted);font-size:0.82rem">'+joined+'</td><td></td>';
     if (adminData && adminData.role === 'admin') {
+      const editBtn = document.createElement('button');
+      editBtn.textContent = 'Edit';
+      editBtn.style.cssText = 'padding:3px 8px;background:rgba(26,46,90,0.07);color:var(--navy);border:1px solid rgba(26,46,90,0.15);border-radius:6px;font-size:0.7rem;cursor:pointer;margin-right:6px';
+      editBtn.onclick = function() { openEditStudentModal(s); };
       const delBtn = document.createElement('button');
       delBtn.textContent = 'Remove';
       delBtn.style.cssText = 'padding:3px 8px;background:rgba(224,82,82,0.08);color:var(--red);border:1px solid rgba(224,82,82,0.2);border-radius:6px;font-size:0.7rem;cursor:pointer';
       delBtn.onclick = function() { deleteStudent(s.id); };
+      tr.lastElementChild.appendChild(editBtn);
       tr.lastElementChild.appendChild(delBtn);
     }
     tbody.appendChild(tr);
@@ -1314,6 +1353,73 @@ async function deleteStudent(id) {
   await sb.from('students').delete().eq('id', id);
   toast('Student removed.');
   await loadStudents(); renderStudents();
+}
+
+function openEditStudentModal(s) {
+  document.getElementById('es-id').value = s.id;
+  document.getElementById('es-user-id').value = s.user_id;
+  document.getElementById('es-roll').textContent = s.roll_number || '—';
+  document.getElementById('es-name').value = s.users ? s.users.full_name : '';
+  document.getElementById('es-phone').value = s.users ? (s.users.phone || '') : '';
+  document.getElementById('es-class').value = s.current_class || '10';
+  document.getElementById('es-board').value = s.primary_board || 'CBSE';
+  document.getElementById('es-pname').value = s.parent_name || '';
+  document.getElementById('es-pphone').value = s.parent_phone || '';
+  document.getElementById('es-dob').value = s.date_of_birth ? s.date_of_birth.substring(0,10) : '';
+  document.getElementById('es-pw').value = '';
+  // Set competitive exam from enrollments
+  const compEnroll = s.enrollments ? s.enrollments.find(function(e){ return e.programs && ['JEE','NEET','CUET','CLAT','IPMAT'].includes(e.programs.name); }) : null;
+  document.getElementById('es-comp').value = compEnroll ? compEnroll.programs.name : '';
+  openModal('modal-edit-student');
+}
+
+async function saveEditStudent() {
+  const id = document.getElementById('es-id').value;
+  const userId = document.getElementById('es-user-id').value;
+  const name = document.getElementById('es-name').value.trim();
+  const phone = document.getElementById('es-phone').value.trim();
+  const cls = parseInt(document.getElementById('es-class').value);
+  const board = document.getElementById('es-board').value;
+  const pname = document.getElementById('es-pname').value.trim();
+  const pphone = document.getElementById('es-pphone').value.trim();
+  const dob = document.getElementById('es-dob').value;
+  const pw = document.getElementById('es-pw').value;
+
+  if (!name) { alert('Full name is required.'); return; }
+  if (pw && pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
+
+  const btn = document.querySelector('#modal-edit-student .btn-primary');
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try {
+    // Update students table
+    const { error: sErr } = await sb.from('students').update({
+      current_class: cls,
+      primary_board: board,
+      parent_name: pname || null,
+      parent_phone: pphone || null,
+      date_of_birth: dob || null
+    }).eq('id', id);
+    if (sErr) throw sErr;
+
+    // Update public.users full_name
+    const { error: uErr } = await sb.from('users').update({ full_name: name }).eq('id', userId);
+    if (uErr) throw uErr;
+
+    // Reset password if provided
+    if (pw) {
+      const { error: pwErr } = await sb.rpc('reset_user_password', { p_user_id: userId, p_new_password: pw });
+      if (pwErr) throw pwErr;
+    }
+
+    toast('Student updated!');
+    closeModal('modal-edit-student');
+    await loadStudents(); renderStudents();
+  } catch(err) {
+    alert('Error saving: ' + err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save Changes';
+  }
 }
 async function addStudent() {
   const name = document.getElementById('s-name').value.trim();
