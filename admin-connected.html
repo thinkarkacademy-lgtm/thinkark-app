@@ -391,7 +391,11 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
           </div>
           <div>
             <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Password *</label>
-            <input type="password" id="tm-password" placeholder="Min 8 characters" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" value="ThinkArk@123">
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="text" id="tm-password" placeholder="Auto-generated" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:monospace;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;letter-spacing:1px;">
+              <button type="button" onclick="tmGenPassword()" title="Regenerate password" style="padding:9px 10px;background:var(--navy);color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;white-space:nowrap;flex-shrink:0;">🔄</button>
+            </div>
+            <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">Auto-generated — copy before saving</div>
           </div>
         </div>
       </div>
@@ -2906,6 +2910,18 @@ function renderTeachers() {
 // -- Teacher modal helpers --
 let tmSubjects = [];
 
+function tmGenPassword() {
+  const adj = ['Swift','Bright','Bold','Keen','Smart','Sharp','Quick','Clear'];
+  const noun = ['Tiger','Comet','River','Storm','Falcon','Eagle','Lotus','Cedar'];
+  const sym = ['!','@','#','$','&'];
+  const pw = adj[Math.floor(Math.random()*adj.length)] +
+             noun[Math.floor(Math.random()*noun.length)] +
+             (Math.floor(Math.random()*900)+100) +
+             sym[Math.floor(Math.random()*sym.length)];
+  const el = document.getElementById('tm-password');
+  if (el) el.value = pw;
+}
+
 function openAddTeacherModal() {
   tmSubjects = [];
   document.getElementById('teacher-modal-title').textContent = 'Add Teacher';
@@ -2914,7 +2930,7 @@ function openAddTeacherModal() {
   document.getElementById('tm-name').value = '';
   document.getElementById('tm-phone').value = '';
   document.getElementById('tm-email').value = '';
-  document.getElementById('tm-password').value = 'ThinkArk@123';
+  tmGenPassword(); // auto-generate a fresh password
   document.getElementById('tm-auth-fields').style.display = '';
   document.getElementById('tm-active-row').style.display = 'none';
   document.getElementById('tm-deactivate-btn').style.display = 'none';
@@ -3005,6 +3021,7 @@ async function saveTeacher() {
   const isActive = document.getElementById('tm-active').checked;
   const classes = getSelectedClasses();
   if (!name) { toast('Full name is required.', 'error'); return; }
+  if (!phone || phone.length < 10) { toast('Phone number is required (10 digits).', 'error'); return; }
   const btn = document.getElementById('tm-save-btn');
   btn.disabled = true; btn.textContent = 'Saving…';
 
