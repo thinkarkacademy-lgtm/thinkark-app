@@ -233,10 +233,11 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <option value="">All Classes</option>
       <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
       <option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option>
+      <option value="13">Dropper</option>
     </select>
     <select id="sf-board" onchange="renderStudents()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:var(--white);color:var(--navy);cursor:pointer">
       <option value="">All Boards</option>
-      <option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option>
+      <option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option><option>Competitive</option><option>Others</option>
     </select>
     <input id="sf-search" type="text" placeholder="Search by name…" oninput="renderStudents()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;min-width:180px">
     <button onclick="document.getElementById('sf-class').value='';document.getElementById('sf-board').value='';document.getElementById('sf-search').value='';renderStudents();" style="padding:6px 10px;background:none;border:1px solid var(--border);border-radius:8px;font-size:0.78rem;color:var(--muted);cursor:pointer">✕ Clear</button>
@@ -259,6 +260,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
           <option value="">Select Class…</option>
           <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
           <option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option>
+          <option value="13">Dropper</option>
         </select>
       </div>
     </div>
@@ -297,6 +299,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <option value="">All Classes</option>
       <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
       <option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option>
+      <option value="13">Dropper</option>
     </select>
     <select id="cf-subject" onchange="renderContent()" style="padding:7px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.82rem;color:var(--navy);background:white;outline:none;">
       <option value="">All Subjects</option>
@@ -528,10 +531,12 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
             <option value="7">Class 7</option><option value="8">Class 8</option>
             <option value="9">Class 9</option><option value="10">Class 10</option>
             <option value="11">Class 11</option><option value="12">Class 12</option>
+            <option value="13">Dropper</option>
           </select>
           <select id="tt-slot-board" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
             <option value="">— Board —</option>
             <option value="CBSE">CBSE</option><option value="ICSE">ICSE</option><option value="ISC">ISC</option><option value="Cambridge">Cambridge</option>
+            <option value="Competitive">Competitive</option><option value="Others">Others</option>
           </select>
         </div>
       </div>
@@ -691,8 +696,8 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <div class="fgroup"><label>&nbsp;</label><div style="font-size:0.75rem;color:var(--muted);padding-top:8px">Share this with the student along with their roll number</div></div>
     </div>
     <div class="form-row fr3">
-      <div class="fgroup"><label>Class</label><select id="s-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10" selected>Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option></select></div>
-      <div class="fgroup"><label>Board</label><select id="s-board"><option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option></select></div>
+      <div class="fgroup"><label>Class</label><select id="s-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10" selected>Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="13">Dropper</option></select></div>
+      <div class="fgroup"><label>Board</label><select id="s-board"><option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option><option>Competitive</option><option>Others</option></select></div>
       <div class="fgroup"><label>Competitive Exam</label><select id="s-comp"><option value="">None</option><option>JEE</option><option>NEET</option><option>CUET</option><option>CLAT</option><option>IPMAT</option></select></div>
     </div>
     <div class="form-row fr2">
@@ -720,8 +725,8 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <div class="fgroup"><label>Phone</label><input id="es-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
     </div>
     <div class="form-row fr3">
-      <div class="fgroup"><label>Class</label><select id="es-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option></select></div>
-      <div class="fgroup"><label>Board</label><select id="es-board"><option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option></select></div>
+      <div class="fgroup"><label>Class</label><select id="es-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="13">Dropper</option></select></div>
+      <div class="fgroup"><label>Board</label><select id="es-board"><option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option><option>Competitive</option><option>Others</option></select></div>
       <div class="fgroup"><label>Competitive Exam</label><select id="es-comp"><option value="">None</option><option>JEE</option><option>NEET</option><option>CUET</option><option>CLAT</option><option>IPMAT</option></select></div>
     </div>
     <div class="form-row fr2">
@@ -761,8 +766,8 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
           <option value="Others">Others</option>
         </select>
       </div>
-      <div class="fgroup"><label>Class <span style="color:var(--red)">*</span></label><select id="c-class" onchange="updateSubjectsByClass()"><option value="" disabled selected>Select class…</option><option value="all">All Classes</option><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="competitive">Competitive</option></select></div>
-      <div class="fgroup"><label>Board <span style="color:var(--red)">*</span></label><select id="c-board" onchange="updateSubjectsByClass()"><option value="" disabled selected>Select board…</option><option value="All">All Boards</option><option value="CBSE">CBSE</option><option value="ICSE">ICSE</option><option value="ISC">ISC</option><option value="Cambridge">Cambridge</option></select></div>
+      <div class="fgroup"><label>Class <span style="color:var(--red)">*</span></label><select id="c-class" onchange="updateSubjectsByClass()"><option value="" disabled selected>Select class…</option><option value="all">All Classes</option><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="13">Dropper</option><option value="competitive">Competitive</option></select></div>
+      <div class="fgroup"><label>Board <span style="color:var(--red)">*</span></label><select id="c-board" onchange="updateSubjectsByClass()"><option value="" disabled selected>Select board…</option><option value="All">All Boards</option><option value="CBSE">CBSE</option><option value="ICSE">ICSE</option><option value="ISC">ISC</option><option value="Cambridge">Cambridge</option><option value="Competitive">Competitive</option><option value="Others">Others</option></select></div>
     </div>
     <div class="form-row fr2">
       <div class="fgroup"><label>Subject <span style="color:var(--red)">*</span></label><select id="c-subject"><option value="" disabled selected>Select subject…</option></select></div>
@@ -1267,7 +1272,7 @@ function renderTimetableGrid() {
         if (slot) {
           const subName = slot.subjects ? slot.subjects.name : '—';
           const tchLast = slot.teachers ? slot.teachers.full_name.split(' ').slice(-1)[0] : '';
-          const cls = slot.class_level ? 'Cl ' + slot.class_level : '';
+          const cls = slot.class_level ? (slot.class_level === 13 ? 'Dropper' : 'Cl ' + slot.class_level) : '';
           const brd = slot.board || '';
           const noteStr = slot.notes ? '<div style="font-size:0.6rem;color:var(--muted);font-style:italic;margin-top:1px;">' + slot.notes + '</div>' : '';
           cellBg = 'background:' + roomColor + ';';
@@ -1617,25 +1622,43 @@ function updateSubjectsByClass() {
 
   if (!cls || !board) return; // require both class and board first
 
+  // Competitive / Dropper subjects
+  const competitiveSubjects = ['Quantitative Aptitude', 'Logical Reasoning', 'Data Interpretation', 'General Aptitude', 'Legal Reasoning'];
+
   // Subject lists per board
   const byBoard = {
     CBSE: ['Mathematics', 'Science', 'English', 'Hindi', 'Social Studies', 'Sanskrit', 'Computer Science'],
     ICSE: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'History & Civics', 'Geography', 'Computer Applications', 'Environmental Science'],
     ISC: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Economics', 'Commerce', 'Computer Science', 'Psychology'],
     Cambridge: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'History', 'Geography', 'Economics'],
+    Competitive: competitiveSubjects,
+    Others: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Science', 'English', 'Hindi', 'Social Studies', 'History & Civics', 'Geography', 'Computer Science'],
     All: ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'Science', 'English', 'Hindi', 'Social Studies', 'History & Civics', 'Geography', 'Computer Science']
   };
 
-  // For class 11-12 CBSE, add streams
-  const isHigher = cls === '11' || cls === '12';
+  // Competitive board always shows competitive subjects
+  if (board === 'Competitive' || cls === 'competitive') {
+    let subjects = competitiveSubjects;
+    subjects.forEach(function(name) {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      sel.appendChild(opt);
+    });
+    const othOpt = document.createElement('option'); othOpt.value = 'Others'; othOpt.textContent = 'Others'; sel.appendChild(othOpt);
+    return;
+  }
+
+  // For class 11-12 CBSE / Dropper CBSE, add streams
+  const isHigher = cls === '11' || cls === '12' || cls === '13';
   let subjects = byBoard[board] || byBoard['All'];
-  if (isHigher && board === 'CBSE') {
+  if (isHigher && (board === 'CBSE' || board === 'ISC')) {
     subjects = ['Mathematics', 'Physics', 'Chemistry', 'Biology', 'English', 'Hindi', 'Economics', 'Commerce', 'Accountancy', 'Business Studies', 'Computer Science', 'Physical Education'];
   }
-  // If "All Classes" selected, show union of all subjects
+  // If "All Classes" selected, show union of all subjects + competitive
   if (cls === 'all') {
     const all = new Set();
     Object.values(byBoard).forEach(function(list){ list.forEach(function(s){ all.add(s); }); });
+    competitiveSubjects.forEach(function(s){ all.add(s); });
     subjects = Array.from(all).sort();
   }
 
@@ -1925,7 +1948,7 @@ function renderContent() {
   tbody.innerHTML = '';
   filtered.forEach(function(c) {
     const subj = c.subjects ? c.subjects.name : '-';
-    const cls = c.class_level ? 'Class '+c.class_level : 'All';
+    const cls = clsLabel(c.class_level);
     const uploader = c.users ? c.users.full_name : 'Admin';
     const tr = document.createElement('tr');
     const folderBadge = c.folder ? '<span style="font-size:0.68rem;font-weight:700;padding:2px 7px;background:rgba(26,46,90,0.08);color:var(--navy);border-radius:10px">'+c.folder+'</span>' : '-';
@@ -2823,7 +2846,7 @@ async function deleteLead(id) {
 let allTeachers = [];
 let teachersFilter = 'active';
 
-const KNOWN_SUBJECTS = ['Mathematics','Science','Physics','Chemistry','Biology','Computers','English','Hindi','Social Studies','History & Civics','Geography','Economics','Accountancy','Business Studies'];
+const KNOWN_SUBJECTS = ['Mathematics','Science','Physics','Chemistry','Biology','Computers','English','Hindi','Social Studies','History & Civics','Geography','Economics','Accountancy','Business Studies','Quantitative Aptitude','Logical Reasoning','Data Interpretation','General Aptitude','Legal Reasoning'];
 
 async function loadTeachers() {
   const { data } = await sb.from('teachers')
@@ -2860,7 +2883,7 @@ function renderTeachers() {
   }
   el.innerHTML = list.map(t => {
     const email = t.users?.email || '—';
-    const classes = (t.class_levels||[]).sort((a,b)=>a-b).map(c=>'<span style="font-size:0.68rem;background:rgba(14,65,101,0.08);color:var(--navy);padding:2px 7px;border-radius:5px;font-weight:700;">Cl.'+c+'</span>').join(' ');
+    const classes = (t.class_levels||[]).sort((a,b)=>a-b).map(c=>'<span style="font-size:0.68rem;background:rgba(14,65,101,0.08);color:var(--navy);padding:2px 7px;border-radius:5px;font-weight:700;">'+(c===13?'Dropper':'Cl.'+c)+'</span>').join(' ');
     const subjects = (t.subjects||[]).map(s=>'<span style="font-size:0.7rem;background:rgba(201,168,76,0.12);color:var(--gold);padding:2px 8px;border-radius:5px;font-weight:700;">'+s+'</span>').join(' ');
     const statusDot = t.is_active
       ? '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:5px;"></span>'
@@ -2961,9 +2984,13 @@ function renderTeacherSubjectChips() {
 function renderTeacherClassChecks(selected) {
   const wrap = document.getElementById('tm-class-checks');
   if (!wrap) return;
-  wrap.innerHTML = [7,8,9,10,11,12].map(cls =>
+  const clsOptions = [
+    {v:7,l:'Class 7'},{v:8,l:'Class 8'},{v:9,l:'Class 9'},{v:10,l:'Class 10'},
+    {v:11,l:'Class 11'},{v:12,l:'Class 12'},{v:13,l:'Dropper'}
+  ];
+  wrap.innerHTML = clsOptions.map(({v,l}) =>
     `<label style="display:flex;align-items:center;gap:5px;cursor:pointer;padding:5px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;font-weight:600;color:var(--navy);background:white;">
-      <input type="checkbox" value="${cls}" ${selected.includes(cls)?'checked':''} style="width:14px;height:14px;"> Class ${cls}
+      <input type="checkbox" value="${v}" ${selected.includes(v)?'checked':''} style="width:14px;height:14px;"> ${l}
     </label>`
   ).join('');
 }
@@ -3185,7 +3212,7 @@ function renderMyProfile() {
   ];
   if (isTeacher && td) {
     const classes = (td.class_levels && td.class_levels.length)
-      ? td.class_levels.sort((a,b)=>a-b).map(c=>'Class '+c).join(', ')
+      ? td.class_levels.sort((a,b)=>a-b).map(c=>clsLabel(c)).join(', ')
       : '—';
     const subjects = (td.subjects && td.subjects.length) ? td.subjects.join(', ') : '—';
     rows.push(['Mapped Classes', classes]);
@@ -3198,6 +3225,12 @@ function renderMyProfile() {
 }
 
 // -- Helpers --
+function clsLabel(n) {
+  // Convert class number to display label (13 = Dropper)
+  if (!n && n !== 0) return 'All';
+  return n === 13 ? 'Dropper' : 'Class ' + n;
+}
+
 function timeAgo(dt) {
   const diff=Date.now()-new Date(dt), mins=Math.floor(diff/60000);
   if (mins<60) return mins+'m ago';
