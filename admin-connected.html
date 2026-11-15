@@ -1815,7 +1815,7 @@ function renderStudents() {
     if (sfBoard && (s.primary_board || '') !== sfBoard) return false;
     if (sfSearch) {
       const name = s.users ? (s.users.full_name || '').toLowerCase() : '';
-      const roll = (s.roll_number || '').toLowerCase();
+      const roll = String(s.roll_number || '').toLowerCase();
       if (!name.includes(sfSearch) && !roll.includes(sfSearch)) return false;
     }
     return true;
