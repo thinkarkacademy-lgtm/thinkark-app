@@ -263,7 +263,12 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <option>CBSE</option><option>ICSE</option><option>ISC</option><option>Cambridge</option><option>Competitive</option><option>Others</option>
     </select>
     <input id="sf-search" type="text" placeholder="Search by name…" oninput="renderStudents()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;min-width:180px">
-    <button onclick="document.getElementById('sf-class').value='';document.getElementById('sf-board').value='';document.getElementById('sf-search').value='';renderStudents();" style="padding:6px 10px;background:none;border:1px solid var(--border);border-radius:8px;font-size:0.78rem;color:var(--muted);cursor:pointer">✕ Clear</button>
+    <select id="sf-status" onchange="renderStudents()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:0.82rem;background:var(--white);color:var(--navy);cursor:pointer">
+      <option value="active">Active</option>
+      <option value="inactive">Inactive</option>
+      <option value="">All</option>
+    </select>
+    <button onclick="document.getElementById('sf-class').value='';document.getElementById('sf-board').value='';document.getElementById('sf-search').value='';document.getElementById('sf-status').value='active';renderStudents();" style="padding:6px 10px;background:none;border:1px solid var(--border);border-radius:8px;font-size:0.78rem;color:var(--muted);cursor:pointer">✕ Clear</button>
     <span id="students-count" style="margin-left:auto;font-size:0.78rem;color:var(--muted)"></span>
   </div>
   <div class="card tbl-wrap" style="padding:0;overflow-x:auto;"><table class="tbl"><thead><tr><th style="padding-left:20px">Student</th><th>Roll No</th><th>Programs</th><th>Board</th><th>Parent Phone</th><th>Acct. Created</th><th>Actions</th></tr></thead><tbody id="students-tbody"><tr><td colspan="7"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
@@ -771,8 +776,31 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <div class="fgroup"><input id="es-pw" type="password" placeholder="Leave blank to keep current password"></div>
     </div>
     <div class="modal-footer">
+      <button class="btn btn-danger" id="es-deactivate-btn" style="margin-right:auto;" onclick="promptStudentDeactivation()">Deactivate</button>
       <button class="btn btn-secondary" onclick="closeModal('modal-edit-student')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditStudent()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Student Deactivation Reason -->
+<div class="modal-overlay" id="modal-student-deactivate">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:420px;">
+    <div class="modal-title">Deactivate Student <button class="modal-close" onclick="closeModal('modal-student-deactivate')">✕</button></div>
+    <p style="font-size:0.85rem;color:var(--navy);margin-bottom:16px;">Select the reason for deactivating this student's account.</p>
+    <div class="fgroup">
+      <label>Reason *</label>
+      <select id="es-deactivate-reason" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-size:0.875rem;color:var(--navy);outline:none;background:white;">
+        <option value="">— Select reason —</option>
+        <option value="Dropped">Dropped</option>
+        <option value="Passed Out">Passed Out</option>
+        <option value="Unpaid Fee">Unpaid Fee</option>
+        <option value="Others">Others</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-student-deactivate')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmStudentDeactivation()">Deactivate</button>
     </div>
   </div>
 </div>
@@ -1062,7 +1090,7 @@ async function handleLogout() { await sb.auth.signOut(); window.location.href='l
 
 // -- Load --
 async function loadStudents() {
-  const { data } = await sb.from('students').select('id, user_id, primary_board, current_class, parent_phone, roll_number, created_at, admission_date, date_of_birth, parent_name, users(*), enrollments(*, programs(*))').order('created_at', { ascending: false });
+  const { data } = await sb.from('students').select('id, user_id, primary_board, current_class, parent_phone, roll_number, created_at, admission_date, date_of_birth, parent_name, is_active, deactivation_reason, users(*), enrollments(*, programs(*))').order('created_at', { ascending: false });
   allStudents = data || [];
   const sub = document.getElementById('students-sub');
   if (sub) sub.textContent = allStudents.length + ' enrolled students';
@@ -1812,6 +1840,7 @@ function renderStudents() {
   const sfClass = (document.getElementById('sf-class')||{}).value || '';
   const sfBoard = (document.getElementById('sf-board')||{}).value || '';
   const sfSearch = ((document.getElementById('sf-search')||{}).value || '').toLowerCase();
+  const sfStatus = (document.getElementById('sf-status')||{}).value;
 
   let list = allStudents.filter(function(s) {
     if (sfClass && String(s.current_class) !== sfClass) return false;
@@ -1821,6 +1850,8 @@ function renderStudents() {
       const roll = String(s.roll_number || '').toLowerCase();
       if (!name.includes(sfSearch) && !roll.includes(sfSearch)) return false;
     }
+    if (sfStatus === 'active' && s.is_active === false) return false;
+    if (sfStatus === 'inactive' && s.is_active !== false) return false;
     return true;
   });
 
@@ -1839,8 +1870,11 @@ function renderStudents() {
     const board = s.primary_board || '-';
     const phone = s.parent_phone || '-';
     const joined = s.created_at ? new Date(s.created_at).toLocaleDateString('en-IN') : '-';
+    const isInactive = s.is_active === false;
+    const inactiveBadge = isInactive ? ' <span style="display:inline-block;padding:1px 6px;background:rgba(224,82,82,0.1);color:var(--red);border:1px solid rgba(224,82,82,0.25);border-radius:4px;font-size:0.68rem;font-weight:600;vertical-align:middle;margin-left:4px">Inactive</span>' : '';
     const tr = document.createElement('tr');
-    tr.innerHTML = '<td style="padding-left:20px;font-weight:700">'+name+'</td><td style="font-family:monospace;font-size:0.82rem;color:var(--muted)">'+roll+'</td><td>'+prog+'</td><td>'+board+'</td><td>'+phone+'</td><td style="color:var(--muted);font-size:0.82rem">'+joined+'</td><td></td>';
+    if (isInactive) tr.style.opacity = '0.65';
+    tr.innerHTML = '<td style="padding-left:20px;font-weight:700">'+name+inactiveBadge+'</td><td style="font-family:monospace;font-size:0.82rem;color:var(--muted)">'+roll+'</td><td>'+prog+'</td><td>'+board+'</td><td>'+phone+'</td><td style="color:var(--muted);font-size:0.82rem">'+joined+'</td><td></td>';
     if (adminData && adminData.role === 'admin') {
       const editBtn = document.createElement('button');
       editBtn.textContent = 'Edit';
@@ -1884,7 +1918,53 @@ function openEditStudentModal(s) {
   // Set competitive exam from enrollments
   const compEnroll = s.enrollments ? s.enrollments.find(function(e){ return e.programs && ['JEE','NEET','CUET','CLAT','IPMAT'].includes(e.programs.name); }) : null;
   document.getElementById('es-comp').value = compEnroll ? compEnroll.programs.name : '';
+  // Deactivate button: show Reactivate if already inactive
+  const deactBtn = document.getElementById('es-deactivate-btn');
+  if (deactBtn) {
+    if (s.is_active === false) {
+      deactBtn.textContent = 'Reactivate';
+      deactBtn.classList.remove('btn-danger');
+      deactBtn.classList.add('btn-secondary');
+    } else {
+      deactBtn.textContent = 'Deactivate';
+      deactBtn.classList.remove('btn-secondary');
+      deactBtn.classList.add('btn-danger');
+    }
+  }
   openModal('modal-edit-student');
+}
+
+function promptStudentDeactivation() {
+  const btn = document.getElementById('es-deactivate-btn');
+  if (btn && btn.textContent.trim() === 'Reactivate') {
+    // Reactivate directly — no reason needed
+    confirmStudentDeactivation(true);
+    return;
+  }
+  document.getElementById('es-deactivate-reason').value = '';
+  openModal('modal-student-deactivate');
+}
+
+async function confirmStudentDeactivation(reactivate) {
+  const id = document.getElementById('es-id').value;
+  const userId = document.getElementById('es-user-id').value;
+  const setActive = !!reactivate;
+  if (!setActive) {
+    const reason = document.getElementById('es-deactivate-reason').value;
+    if (!reason) { toast('Please select a reason.', 'error'); return; }
+    const { error } = await sb.from('students').update({ is_active: false, deactivation_reason: reason }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    if (userId) await sb.from('users').update({ is_active: false }).eq('id', userId);
+    toast('Student deactivated.');
+    closeModal('modal-student-deactivate');
+  } else {
+    const { error } = await sb.from('students').update({ is_active: true, deactivation_reason: null }).eq('id', id);
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+    if (userId) await sb.from('users').update({ is_active: true }).eq('id', userId);
+    toast('Student reactivated.');
+  }
+  closeModal('modal-edit-student');
+  await loadStudents(); renderStudents();
 }
 
 async function saveEditStudent() {
