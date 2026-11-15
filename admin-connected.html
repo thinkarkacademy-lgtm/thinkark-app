@@ -402,11 +402,11 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
         <div>
           <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">First Name *</label>
-          <input type="text" id="tm-fname" placeholder="e.g. Priya" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
+          <input type="text" id="tm-fname" placeholder="e.g. Priya" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" oninput="onTeacherNameInput()">
         </div>
         <div>
           <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Last Name</label>
-          <input type="text" id="tm-lname" placeholder="e.g. Sharma" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
+          <input type="text" id="tm-lname" placeholder="e.g. Sharma" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" oninput="onTeacherNameInput()">
         </div>
       </div>
 
@@ -414,11 +414,12 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
         <div>
           <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Phone *</label>
-          <input type="text" id="tm-phone" placeholder="10-digit mobile" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" maxlength="10">
+          <input type="text" id="tm-phone" placeholder="10-digit mobile" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" maxlength="10" oninput="onTeacherNameInput()">
         </div>
         <div id="tm-email-wrap">
           <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Login Email *</label>
-          <input type="email" id="tm-email" placeholder="name@thinkark.in" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
+          <input type="email" id="tm-email" placeholder="Auto-generated from name" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" oninput="onTeacherEmailManualInput()">
+          <div id="tm-email-status" style="font-size:0.72rem;margin-top:4px;min-height:16px;"></div>
         </div>
       </div>
       <!-- hidden field kept for edit-mode compat -->
@@ -718,8 +719,14 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       &#9432; Roll number will be auto-generated (e.g. <strong>202607001</strong>) and shown after account creation. Student logs in with Roll Number + Password.
     </div>
     <div class="form-row fr2">
-      <div class="fgroup"><label>First Name *</label><input id="s-fname" type="text" placeholder="e.g. Rahul"></div>
-      <div class="fgroup"><label>Last Name</label><input id="s-lname" type="text" placeholder="e.g. Sharma"></div>
+      <div class="fgroup"><label>First Name *</label><input id="s-fname" type="text" placeholder="e.g. Rahul" oninput="onStudentNameInput()"></div>
+      <div class="fgroup"><label>Last Name</label><input id="s-lname" type="text" placeholder="e.g. Sharma" oninput="onStudentNameInput()"></div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <label style="font-size:0.78rem;font-weight:600;color:var(--navy);display:block;margin-bottom:5px;">Login Email (auto-generated)</label>
+      <input type="email" id="s-email" placeholder="Fills in as you type the name…" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;background:rgba(26,46,90,0.03);" oninput="onStudentEmailManualInput()" onclick="this.removeAttribute('readonly');this.style.background=''" readonly>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:2px;">Click to edit manually if needed</div>
+      <div id="s-email-status" style="font-size:0.72rem;margin-top:4px;min-height:16px;"></div>
     </div>
     <div class="form-row fr2">
       <div class="fgroup"><label>Phone (optional)</label><input id="s-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
@@ -735,7 +742,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <div class="fgroup"><label>Parent Phone</label><input id="s-pphone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modal-add-student')">Cancel</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-student');sEmailManual=false;setEmailStatus('s-email-status','','');document.getElementById('s-email').setAttribute('readonly','');document.getElementById('s-email').style.background='rgba(26,46,90,0.03)'">Cancel</button>
       <button class="btn btn-primary" onclick="addStudent()">Create Account</button>
     </div>
   </div>
@@ -2053,7 +2060,8 @@ async function addStudent() {
           class_level: parseInt(cls),
           board,
           parent_name: pname || null,
-          parent_phone: pphone || null
+          parent_phone: pphone || null,
+          email: document.getElementById('s-email').value.trim() || undefined
         })
       }
     );
@@ -2076,9 +2084,12 @@ async function addStudent() {
     toast('Student created! Roll No: ' + roll);
     alert('Student account created!\n\nRoll Number: ' + roll + '\nPassword: ' + autoPassword + '\n\nShare these with the student. They log in with Roll Number + Password.');
 
-    ['s-fname','s-lname','s-phone','s-pname','s-pphone'].forEach(function(id) {
+    ['s-fname','s-lname','s-phone','s-pname','s-pphone','s-email'].forEach(function(id) {
       const el = document.getElementById(id); if (el) el.value = '';
     });
+    sEmailManual = false;
+    setEmailStatus('s-email-status', '', '');
+    document.getElementById('s-email').setAttribute('readonly', '');
     closeModal('modal-add-student');
     await loadStudents(); renderStudents();
 
@@ -3087,8 +3098,135 @@ function tmGenPassword() {
   if (el) el.value = pw;
 }
 
+// ── Email auto-generation & availability check ──────────────────────────────
+
+function toEmailSlug(str) {
+  return (str || '').trim().toLowerCase()
+    .replace(/[^a-z0-9]/g, '');   // strip spaces, dots, special chars
+}
+
+function buildBaseEmail(fname, lname) {
+  const f = toEmailSlug(fname);
+  const l = toEmailSlug(lname);
+  if (!f) return '';
+  return l ? f + '.' + l + '@thinkark.in' : f + '@thinkark.in';
+}
+
+async function findAvailableEmail(base) {
+  // base = e.g. "priya@thinkark.in" or "priya.sharma@thinkark.in"
+  if (!base) return { email: '', available: false };
+  const [local, domain] = base.split('@');
+  // Check base first, then local2, local3 …
+  for (let i = 0; i < 20; i++) {
+    const candidate = i === 0 ? base : local + (i + 1) + '@' + domain;
+    const { data } = await sb.from('users').select('id').eq('email', candidate).maybeSingle();
+    if (!data) return { email: candidate, available: true, suffix: i === 0 ? null : i + 1 };
+  }
+  return { email: local + '99@' + domain, available: true, suffix: 99 };
+}
+
+let emailCheckTimer = null;
+
+function setEmailStatus(elId, msg, color) {
+  const el = document.getElementById(elId);
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+// ── Teacher email auto-gen ──
+
+let tmEmailManual = false;   // true if admin typed the email themselves
+
+function onTeacherNameInput() {
+  if (tmEmailManual) return;   // admin took over — don't overwrite
+  const fname = document.getElementById('tm-fname').value.trim();
+  const lname = document.getElementById('tm-lname').value.trim();
+  const base = buildBaseEmail(fname, lname);
+  if (!base) {
+    document.getElementById('tm-email').value = '';
+    setEmailStatus('tm-email-status', '', '');
+    return;
+  }
+  document.getElementById('tm-email').value = base;
+  setEmailStatus('tm-email-status', '…', 'var(--muted)');
+  clearTimeout(emailCheckTimer);
+  emailCheckTimer = setTimeout(async function() {
+    const { email, suffix } = await findAvailableEmail(base);
+    document.getElementById('tm-email').value = email;
+    if (suffix) {
+      setEmailStatus('tm-email-status', '⚠ ' + base + ' taken — suggested: ' + email, '#b45309');
+    } else {
+      setEmailStatus('tm-email-status', '✓ Available', '#16a34a');
+    }
+  }, 500);
+}
+
+function onTeacherEmailManualInput() {
+  tmEmailManual = true;
+  const email = document.getElementById('tm-email').value.trim();
+  if (!email) { setEmailStatus('tm-email-status', '', ''); return; }
+  setEmailStatus('tm-email-status', '…', 'var(--muted)');
+  clearTimeout(emailCheckTimer);
+  emailCheckTimer = setTimeout(async function() {
+    const { data } = await sb.from('users').select('id').eq('email', email).maybeSingle();
+    if (data) {
+      setEmailStatus('tm-email-status', '✗ Already taken', '#dc2626');
+    } else {
+      setEmailStatus('tm-email-status', '✓ Available', '#16a34a');
+    }
+  }, 500);
+}
+
+// ── Student email auto-gen ──
+
+let sEmailManual = false;
+
+function onStudentNameInput() {
+  if (sEmailManual) return;
+  const fname = document.getElementById('s-fname').value.trim();
+  const lname = document.getElementById('s-lname').value.trim();
+  const base = buildBaseEmail(fname, lname);
+  const emailEl = document.getElementById('s-email');
+  if (!base) {
+    emailEl.value = '';
+    setEmailStatus('s-email-status', '', '');
+    return;
+  }
+  emailEl.value = base;
+  setEmailStatus('s-email-status', '…', 'var(--muted)');
+  clearTimeout(emailCheckTimer);
+  emailCheckTimer = setTimeout(async function() {
+    const { email, suffix } = await findAvailableEmail(base);
+    emailEl.value = email;
+    if (suffix) {
+      setEmailStatus('s-email-status', '⚠ ' + base + ' taken — using: ' + email, '#b45309');
+    } else {
+      setEmailStatus('s-email-status', '✓ Available', '#16a34a');
+    }
+  }, 500);
+}
+
+function onStudentEmailManualInput() {
+  sEmailManual = true;
+  document.getElementById('s-email').removeAttribute('readonly');
+  const email = document.getElementById('s-email').value.trim();
+  if (!email) { setEmailStatus('s-email-status', '', ''); return; }
+  setEmailStatus('s-email-status', '…', 'var(--muted)');
+  clearTimeout(emailCheckTimer);
+  emailCheckTimer = setTimeout(async function() {
+    const { data } = await sb.from('users').select('id').eq('email', email).maybeSingle();
+    if (data) {
+      setEmailStatus('s-email-status', '✗ Already taken', '#dc2626');
+    } else {
+      setEmailStatus('s-email-status', '✓ Available', '#16a34a');
+    }
+  }, 500);
+}
+
+// ────────────────────────────────────────────────────────────────────────────
+
 function openAddTeacherModal() {
   tmSubjects = [];
+  tmEmailManual = false;
   document.getElementById('teacher-modal-title').textContent = 'Add Teacher';
   document.getElementById('tm-teacher-id').value = '';
   document.getElementById('tm-user-id').value = '';
@@ -3096,6 +3234,7 @@ function openAddTeacherModal() {
   document.getElementById('tm-lname').value = '';
   document.getElementById('tm-phone').value = '';
   document.getElementById('tm-email').value = '';
+  setEmailStatus('tm-email-status', '', '');
   document.getElementById('tm-email-wrap').style.display = '';
   document.getElementById('tm-active-row').style.display = 'none';
   document.getElementById('tm-deactivate-btn').style.display = 'none';
