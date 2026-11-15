@@ -266,7 +266,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
     <button onclick="document.getElementById('sf-class').value='';document.getElementById('sf-board').value='';document.getElementById('sf-search').value='';renderStudents();" style="padding:6px 10px;background:none;border:1px solid var(--border);border-radius:8px;font-size:0.78rem;color:var(--muted);cursor:pointer">✕ Clear</button>
     <span id="students-count" style="margin-left:auto;font-size:0.78rem;color:var(--muted)"></span>
   </div>
-  <div class="card tbl-wrap" style="padding:0;overflow-x:auto;"><table class="tbl"><thead><tr><th style="padding-left:20px">Student</th><th>Roll No</th><th>Programs</th><th>Board</th><th>Parent Phone</th><th>Joined</th><th>Actions</th></tr></thead><tbody id="students-tbody"><tr><td colspan="7"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
+  <div class="card tbl-wrap" style="padding:0;overflow-x:auto;"><table class="tbl"><thead><tr><th style="padding-left:20px">Student</th><th>Roll No</th><th>Programs</th><th>Board</th><th>Parent Phone</th><th>Acct. Created</th><th>Actions</th></tr></thead><tbody id="students-tbody"><tr><td colspan="7"><div class="skeleton" style="height:200px;margin:16px;border-radius:8px;"></div></td></tr></tbody></table></div>
 </div>
 
 <!-- ATTENDANCE -->
@@ -762,7 +762,10 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <div class="fgroup"><label>Parent Name</label><input id="es-pname" type="text" placeholder="Parent / Guardian name"></div>
       <div class="fgroup"><label>Parent Phone</label><input id="es-pphone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
     </div>
-    <div class="fgroup" style="margin-top:4px"><label>Date of Birth</label><input id="es-dob" type="date"></div>
+    <div class="form-row fr2" style="margin-top:4px">
+      <div class="fgroup"><label>Date of Birth</label><input id="es-dob" type="date"></div>
+      <div class="fgroup"><label>Joining Date</label><input id="es-admission" type="date"><div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">When student joined ThinkArk</div></div>
+    </div>
     <div style="border-top:1px solid var(--border);margin:16px 0 12px;padding-top:12px;">
       <div style="font-size:0.75rem;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Reset Password (optional)</div>
       <div class="fgroup"><input id="es-pw" type="password" placeholder="Leave blank to keep current password"></div>
@@ -1059,7 +1062,7 @@ async function handleLogout() { await sb.auth.signOut(); window.location.href='l
 
 // -- Load --
 async function loadStudents() {
-  const { data } = await sb.from('students').select('id, user_id, primary_board, current_class, parent_phone, roll_number, created_at, users(*), enrollments(*, programs(*))').order('created_at', { ascending: false });
+  const { data } = await sb.from('students').select('id, user_id, primary_board, current_class, parent_phone, roll_number, created_at, admission_date, date_of_birth, parent_name, users(*), enrollments(*, programs(*))').order('created_at', { ascending: false });
   allStudents = data || [];
   const sub = document.getElementById('students-sub');
   if (sub) sub.textContent = allStudents.length + ' enrolled students';
@@ -1876,6 +1879,7 @@ function openEditStudentModal(s) {
   document.getElementById('es-pname').value = s.parent_name || '';
   document.getElementById('es-pphone').value = s.parent_phone || '';
   document.getElementById('es-dob').value = s.date_of_birth ? s.date_of_birth.substring(0,10) : '';
+  document.getElementById('es-admission').value = s.admission_date ? s.admission_date.substring(0,10) : '';
   document.getElementById('es-pw').value = '';
   // Set competitive exam from enrollments
   const compEnroll = s.enrollments ? s.enrollments.find(function(e){ return e.programs && ['JEE','NEET','CUET','CLAT','IPMAT'].includes(e.programs.name); }) : null;
@@ -1895,6 +1899,7 @@ async function saveEditStudent() {
   const pname = document.getElementById('es-pname').value.trim();
   const pphone = document.getElementById('es-pphone').value.trim();
   const dob = document.getElementById('es-dob').value;
+  const admission = document.getElementById('es-admission').value;
   const pw = document.getElementById('es-pw').value;
 
   if (!fname) { alert('First name is required.'); return; }
@@ -1910,7 +1915,8 @@ async function saveEditStudent() {
       primary_board: board,
       parent_name: pname || null,
       parent_phone: pphone || null,
-      date_of_birth: dob || null
+      date_of_birth: dob || null,
+      admission_date: admission || null
     }).eq('id', id);
     if (sErr) throw sErr;
 
