@@ -565,7 +565,7 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
             <option value="13">Dropper</option>
           </select>
           <select id="tt-slot-board" style="padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.88rem;">
-            <option value="">— Board —</option>
+            <option value="All">All Boards</option>
             <option value="CBSE">CBSE</option><option value="ICSE">ICSE</option><option value="ISC">ISC</option><option value="Cambridge">Cambridge</option>
             <option value="Competitive">Competitive</option><option value="Others">Others</option>
           </select>
@@ -1353,7 +1353,7 @@ function renderTimetableGrid() {
           const subName = slot.subjects ? slot.subjects.name : '—';
           const tchLast = slot.teachers ? slot.teachers.full_name.split(' ').slice(-1)[0] : '';
           const cls = slot.class_level ? (slot.class_level === 13 ? 'Dropper' : 'Cl ' + slot.class_level) : '';
-          const brd = slot.board || '';
+          const brd = (slot.board && slot.board !== 'All') ? slot.board : '';
           const noteStr = slot.notes ? '<div style="font-size:0.6rem;color:var(--muted);font-style:italic;margin-top:1px;">' + slot.notes + '</div>' : '';
           cellBg = 'background:' + roomColor + ';';
           cellContent =
@@ -1432,7 +1432,7 @@ function openTtSlotModal(dayNum, roomId, templateId) {
 
   // Class & board
   document.getElementById('tt-slot-class').value = slot ? (slot.class_level || '') : '';
-  document.getElementById('tt-slot-board').value = slot ? (slot.board || '') : '';
+  document.getElementById('tt-slot-board').value = slot ? (slot.board || 'All') : 'All';
   document.getElementById('tt-slot-span').value = slot ? (slot.span_slots || 1) : 1;
   document.getElementById('tt-slot-notes').value = slot ? (slot.notes || '') : '';
 
