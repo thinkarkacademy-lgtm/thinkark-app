@@ -393,34 +393,32 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <input type="hidden" id="tm-teacher-id">
       <input type="hidden" id="tm-user-id">
 
-      <!-- Name + Phone -->
+      <!-- First Name + Last Name -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
         <div>
-          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Full Name *</label>
-          <input type="text" id="tm-name" placeholder="e.g. Priya Sharma" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
+          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">First Name *</label>
+          <input type="text" id="tm-fname" placeholder="e.g. Priya" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
         </div>
         <div>
-          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Phone</label>
-          <input type="text" id="tm-phone" placeholder="10-digit mobile" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" maxlength="10">
+          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Last Name</label>
+          <input type="text" id="tm-lname" placeholder="e.g. Sharma" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
         </div>
       </div>
 
-      <!-- Email + Password (only for new teacher) -->
-      <div id="tm-auth-fields">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
-          <div>
-            <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Login Email *</label>
-            <input type="email" id="tm-email" placeholder="name@thinkark.in" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
-          </div>
-          <div>
-            <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Password *</label>
-            <div style="display:flex;gap:6px;align-items:center;">
-              <input type="text" id="tm-password" placeholder="Auto-generated" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:monospace;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;letter-spacing:1px;">
-              <button type="button" onclick="tmGenPassword()" title="Regenerate password" style="padding:9px 10px;background:var(--navy);color:white;border:none;border-radius:8px;cursor:pointer;font-size:0.9rem;white-space:nowrap;flex-shrink:0;">🔄</button>
-            </div>
-            <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">Auto-generated — copy before saving</div>
-          </div>
+      <!-- Phone + Email (only for new teacher) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Phone *</label>
+          <input type="text" id="tm-phone" placeholder="10-digit mobile" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;" maxlength="10">
         </div>
+        <div id="tm-email-wrap">
+          <label style="font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:var(--navy);display:block;margin-bottom:5px;">Login Email *</label>
+          <input type="email" id="tm-email" placeholder="name@thinkark.in" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:Barlow,sans-serif;font-size:0.875rem;color:var(--navy);outline:none;box-sizing:border-box;">
+        </div>
+      </div>
+      <!-- hidden field kept for edit-mode compat -->
+      <div id="tm-auth-fields" style="display:none;">
+        <input type="hidden" id="tm-password">
       </div>
 
       <!-- Subjects -->
@@ -715,12 +713,12 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       &#9432; Roll number will be auto-generated (e.g. <strong>202607001</strong>) and shown after account creation. Student logs in with Roll Number + Password.
     </div>
     <div class="form-row fr2">
-      <div class="fgroup"><label>Full Name</label><input id="s-name" type="text" placeholder="Student's full name"></div>
-      <div class="fgroup"><label>Phone (optional)</label><input id="s-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+      <div class="fgroup"><label>First Name *</label><input id="s-fname" type="text" placeholder="e.g. Rahul"></div>
+      <div class="fgroup"><label>Last Name</label><input id="s-lname" type="text" placeholder="e.g. Sharma"></div>
     </div>
     <div class="form-row fr2">
-      <div class="fgroup"><label>Temporary Password</label><input id="s-pw" type="password" placeholder="Min 6 characters"></div>
-      <div class="fgroup"><label>&nbsp;</label><div style="font-size:0.75rem;color:var(--muted);padding-top:8px">Share this with the student along with their roll number</div></div>
+      <div class="fgroup"><label>Phone (optional)</label><input id="s-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+      <div class="fgroup"><label>&nbsp;</label><div style="font-size:0.75rem;color:var(--muted);padding-top:8px;">Password auto-generated as <strong>FirstName + last 4 of roll no.</strong> — shown after creation.</div></div>
     </div>
     <div class="form-row fr3">
       <div class="fgroup"><label>Class</label><select id="s-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10" selected>Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="13">Dropper</option></select></div>
@@ -748,8 +746,12 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       Roll No: <strong id="es-roll" style="color:var(--navy);font-family:monospace"></strong>
     </div>
     <div class="form-row fr2">
-      <div class="fgroup"><label>Full Name</label><input id="es-name" type="text" placeholder="Student's full name"></div>
+      <div class="fgroup"><label>First Name *</label><input id="es-fname" type="text" placeholder="e.g. Rahul"></div>
+      <div class="fgroup"><label>Last Name</label><input id="es-lname" type="text" placeholder="e.g. Sharma"></div>
+    </div>
+    <div class="form-row fr2">
       <div class="fgroup"><label>Phone</label><input id="es-phone" type="tel" placeholder="+91 XXXXX XXXXX"></div>
+      <div class="fgroup"></div>
     </div>
     <div class="form-row fr3">
       <div class="fgroup"><label>Class</label><select id="es-class"><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="13">Dropper</option></select></div>
@@ -1863,7 +1865,11 @@ function openEditStudentModal(s) {
   document.getElementById('es-id').value = s.id;
   document.getElementById('es-user-id').value = s.user_id;
   document.getElementById('es-roll').textContent = s.roll_number || '—';
-  document.getElementById('es-name').value = s.users ? s.users.full_name : '';
+  // Split full name into first/last
+  const fullName = s.users ? (s.users.full_name || '') : '';
+  const nameParts = fullName.trim().split(' ');
+  document.getElementById('es-fname').value = nameParts[0] || '';
+  document.getElementById('es-lname').value = nameParts.slice(1).join(' ') || '';
   document.getElementById('es-phone').value = s.users ? (s.users.phone || '') : '';
   document.getElementById('es-class').value = s.current_class || '10';
   document.getElementById('es-board').value = s.primary_board || 'CBSE';
@@ -1880,7 +1886,9 @@ function openEditStudentModal(s) {
 async function saveEditStudent() {
   const id = document.getElementById('es-id').value;
   const userId = document.getElementById('es-user-id').value;
-  const name = document.getElementById('es-name').value.trim();
+  const fname = document.getElementById('es-fname').value.trim();
+  const lname = document.getElementById('es-lname').value.trim();
+  const name = fname + (lname ? ' ' + lname : '');
   const phone = document.getElementById('es-phone').value.trim();
   const cls = parseInt(document.getElementById('es-class').value);
   const board = document.getElementById('es-board').value;
@@ -1889,7 +1897,7 @@ async function saveEditStudent() {
   const dob = document.getElementById('es-dob').value;
   const pw = document.getElementById('es-pw').value;
 
-  if (!name) { alert('Full name is required.'); return; }
+  if (!fname) { alert('First name is required.'); return; }
   if (pw && pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
 
   const btn = document.querySelector('#modal-edit-student .btn-primary');
@@ -1926,8 +1934,9 @@ async function saveEditStudent() {
   }
 }
 async function addStudent() {
-  const name = document.getElementById('s-name').value.trim();
-  const pw = document.getElementById('s-pw').value;
+  const fname = document.getElementById('s-fname').value.trim();
+  const lname = document.getElementById('s-lname').value.trim();
+  const name = fname + (lname ? ' ' + lname : '');
   const phone = document.getElementById('s-phone').value.trim();
   const cls = document.getElementById('s-class').value;
   const board = document.getElementById('s-board').value;
@@ -1935,14 +1944,15 @@ async function addStudent() {
   const pname = document.getElementById('s-pname').value.trim();
   const pphone = document.getElementById('s-pphone').value.trim();
 
-  if (!name || !pw || !cls) { alert('Name, class and password are required.'); return; }
-  if (pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
+  if (!fname || !cls) { alert('First name and class are required.'); return; }
 
   const btn = document.querySelector('#modal-add-student .btn-primary');
   btn.disabled = true; btn.textContent = 'Creating...';
 
   try {
     const { data: { session } } = await sb.auth.getSession();
+    // Pass a temporary password; we'll reset it to FirstName+last4roll once roll number is returned
+    const tempPassword = 'TmpPass_' + Math.random().toString(36).slice(2,8);
     const response = await fetch(
       'https://gaizlwyhthiqguqjfyuq.supabase.co/functions/v1/create-student',
       {
@@ -1952,7 +1962,7 @@ async function addStudent() {
           'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
-          name, password: pw, cls, board,
+          name, password: tempPassword, cls, board,
           comp: comp || null,
           phone: phone || null,
           parentName: pname || null,
@@ -1964,10 +1974,20 @@ async function addStudent() {
     const result = await response.json();
     if (!result.success) throw new Error(result.error);
 
-    toast('Student created! Roll No: ' + result.rollNumber);
-    alert('Student account created!\n\nRoll Number: ' + result.rollNumber + '\nPassword: ' + pw + '\n\nShare these with the student. They log in with Roll Number + Password.');
+    // Auto-generate password: FirstName + last 4 digits of roll number
+    const roll = result.rollNumber || '';
+    const last4 = String(roll).slice(-4);
+    const autoPassword = fname + last4;
 
-    ['s-name','s-pw','s-phone','s-pname','s-pphone'].forEach(function(id) {
+    // Update the student's password to match the formula
+    if (result.userId) {
+      await sb.rpc('reset_user_password', { p_user_id: result.userId, p_new_password: autoPassword });
+    }
+
+    toast('Student created! Roll No: ' + roll);
+    alert('Student account created!\n\nRoll Number: ' + roll + '\nPassword: ' + autoPassword + '\n\nShare these with the student. They log in with Roll Number + Password.');
+
+    ['s-fname','s-lname','s-phone','s-pname','s-pphone'].forEach(function(id) {
       const el = document.getElementById(id); if (el) el.value = '';
     });
     closeModal('modal-add-student');
@@ -2983,11 +3003,11 @@ function openAddTeacherModal() {
   document.getElementById('teacher-modal-title').textContent = 'Add Teacher';
   document.getElementById('tm-teacher-id').value = '';
   document.getElementById('tm-user-id').value = '';
-  document.getElementById('tm-name').value = '';
+  document.getElementById('tm-fname').value = '';
+  document.getElementById('tm-lname').value = '';
   document.getElementById('tm-phone').value = '';
   document.getElementById('tm-email').value = '';
-  tmGenPassword(); // auto-generate a fresh password
-  document.getElementById('tm-auth-fields').style.display = '';
+  document.getElementById('tm-email-wrap').style.display = '';
   document.getElementById('tm-active-row').style.display = 'none';
   document.getElementById('tm-deactivate-btn').style.display = 'none';
   document.getElementById('tm-save-btn').textContent = 'Add Teacher';
@@ -3004,9 +3024,12 @@ function openEditTeacherModal(teacherId) {
   document.getElementById('teacher-modal-title').textContent = 'Edit Teacher';
   document.getElementById('tm-teacher-id').value = t.id;
   document.getElementById('tm-user-id').value = t.user_id || '';
-  document.getElementById('tm-name').value = t.full_name || '';
+  // Split full name into first/last
+  const nameParts = (t.full_name || '').trim().split(' ');
+  document.getElementById('tm-fname').value = nameParts[0] || '';
+  document.getElementById('tm-lname').value = nameParts.slice(1).join(' ') || '';
   document.getElementById('tm-phone').value = t.phone || '';
-  document.getElementById('tm-auth-fields').style.display = 'none'; // hide email/password for edits
+  document.getElementById('tm-email-wrap').style.display = 'none'; // hide email for edits
   document.getElementById('tm-active-row').style.display = '';
   document.getElementById('tm-active').checked = !!t.is_active;
   document.getElementById('tm-deactivate-btn').style.display = t.is_active ? '' : 'none';
@@ -3072,11 +3095,13 @@ function getSelectedClasses() {
 
 async function saveTeacher() {
   const teacherId = document.getElementById('tm-teacher-id').value;
-  const name = document.getElementById('tm-name').value.trim();
+  const fname = document.getElementById('tm-fname').value.trim();
+  const lname = document.getElementById('tm-lname').value.trim();
+  const name = fname + (lname ? ' ' + lname : '');
   const phone = document.getElementById('tm-phone').value.trim();
-  const isActive = document.getElementById('tm-active').checked;
+  const isActive = document.getElementById('tm-active') ? document.getElementById('tm-active').checked : true;
   const classes = getSelectedClasses();
-  if (!name) { toast('Full name is required.', 'error'); return; }
+  if (!fname) { toast('First name is required.', 'error'); return; }
   if (!phone || phone.length < 10) { toast('Phone number is required (10 digits).', 'error'); return; }
   const btn = document.getElementById('tm-save-btn');
   btn.disabled = true; btn.textContent = 'Saving…';
@@ -3089,29 +3114,30 @@ async function saveTeacher() {
       is_active: isActive
     }).eq('id', teacherId);
     if (error) { toast('Error: ' + error.message, 'error'); btn.disabled=false; btn.textContent='Save Changes'; return; }
-    // Sync name to public.users if user_id exists
     const userId = document.getElementById('tm-user-id').value;
     if (userId) await sb.from('users').update({ full_name: name, is_active: isActive }).eq('id', userId);
     toast('Teacher updated!');
+    closeModal('modal-teacher');
+    btn.disabled=false;
+    await loadTeachers();
   } else {
     // --- ADD new teacher ---
     const email = document.getElementById('tm-email').value.trim();
-    const password = document.getElementById('tm-password').value;
     if (!email) { toast('Login email is required.', 'error'); btn.disabled=false; btn.textContent='Add Teacher'; return; }
-    if (!password || password.length < 8) { toast('Password must be at least 8 characters.', 'error'); btn.disabled=false; btn.textContent='Add Teacher'; return; }
-    // Use Supabase admin signUp via service role is not available client-side.
-    // Instead we use the same SQL-based approach: insert via RPC or direct table insert.
-    // We'll call a Postgres function that creates auth + public users atomically.
+    // Auto-generate password: FirstName + last 4 digits of phone
+    const last4 = phone.replace(/\D/g,'').slice(-4);
+    const password = fname + last4;
     const { data: newUserId, error: rpcErr } = await sb.rpc('create_teacher_account', {
       p_email: email, p_password: password, p_full_name: name,
       p_phone: phone || null, p_subjects: tmSubjects, p_class_levels: classes
     });
     if (rpcErr) { toast('Error creating account: ' + rpcErr.message, 'error'); btn.disabled=false; btn.textContent='Add Teacher'; return; }
-    toast('Teacher account created!');
+    closeModal('modal-teacher');
+    btn.disabled=false;
+    await loadTeachers();
+    // Show password to admin
+    alert('Teacher account created!\n\nName: ' + name + '\nEmail: ' + email + '\nPassword: ' + password + '\n\nShare these login details with the teacher.');
   }
-  closeModal('modal-teacher');
-  btn.disabled=false;
-  await loadTeachers();
 }
 
 async function deactivateTeacher() {
