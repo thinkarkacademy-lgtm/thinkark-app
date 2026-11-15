@@ -1971,8 +1971,9 @@ async function addStudent() {
       }
     );
 
-    const result = await response.json();
-    if (!result.success) throw new Error(result.error);
+    let result;
+    try { result = await response.json(); } catch(e) { throw new Error('Server returned invalid response (status ' + response.status + ')'); }
+    if (!result.success) throw new Error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error));
 
     // Auto-generate password: FirstName + last 4 digits of roll number
     const roll = result.rollNumber || '';
