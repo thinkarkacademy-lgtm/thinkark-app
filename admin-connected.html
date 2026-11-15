@@ -3152,12 +3152,14 @@ async function saveTeacher() {
 async function deactivateTeacher() {
   const teacherId = document.getElementById('tm-teacher-id').value;
   const userId = document.getElementById('tm-user-id').value;
-  const isNowActive = !document.getElementById('tm-active').checked;
   if (!teacherId) return;
-  const { error } = await sb.from('teachers').update({ is_active: !isNowActive }).eq('id', teacherId);
+  // Button text tells us the action: "Deactivate" means currently active → set inactive
+  const btn = document.getElementById('tm-deactivate-btn');
+  const setActive = btn.textContent.trim() === 'Activate';
+  const { error } = await sb.from('teachers').update({ is_active: setActive }).eq('id', teacherId);
   if (error) { toast('Error: ' + error.message, 'error'); return; }
-  if (userId) await sb.from('users').update({ is_active: !isNowActive }).eq('id', userId);
-  toast(isNowActive ? 'Teacher deactivated.' : 'Teacher reactivated.');
+  if (userId) await sb.from('users').update({ is_active: setActive }).eq('id', userId);
+  toast(setActive ? 'Teacher reactivated.' : 'Teacher deactivated.');
   closeModal('modal-teacher');
   await loadTeachers();
 }
