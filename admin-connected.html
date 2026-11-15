@@ -545,6 +545,17 @@ body{font-family:Barlow,sans-serif;background:var(--cream-mid);color:var(--navy)
       <tbody id="tt-body"></tbody>
     </table>
     <div style="margin-top:10px;font-size:0.74rem;color:var(--muted);">Click any cell to assign a class · Duration spans multiple rows automatically</div>
+    <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      <span style="font-size:0.72rem;font-weight:700;color:var(--navy);margin-right:4px;">Class colour:</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(100,149,237,0.20)">Class 7</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(80,200,160,0.22)">Class 8</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(255,180,80,0.24)">Class 9</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(230,100,100,0.18)">Class 10</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(160,100,220,0.20)">Class 11</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(60,180,220,0.22)">Class 12</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(200,160,80,0.24)">Dropper</span>
+      <span style="padding:3px 10px;border-radius:6px;font-size:0.72rem;font-weight:600;background:rgba(180,180,180,0.18)">Unassigned</span>
+    </div>
   </div>
 </div>
 
@@ -1145,13 +1156,16 @@ let ttHolidayEditing = null; // "YYYY-MM-DD" being edited
 const TT_DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const TT_DAY_SHORT = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 // Pastel colours per room index (cycles)
-const TT_ROOM_COLORS = [
-  'rgba(100,149,237,0.18)', // blue
-  'rgba(144,238,144,0.22)', // green
-  'rgba(255,180,100,0.22)', // orange
-  'rgba(216,191,216,0.28)', // purple
-  'rgba(200,200,200,0.22)'  // grey (Cabin)
-];
+// Color per class level (7–13/Dropper). Unassigned slots stay white.
+const TT_CLASS_COLORS = {
+  7:  'rgba(100,149,237,0.20)',  // blue      – Class 7
+  8:  'rgba(80,200,160,0.22)',   // teal      – Class 8
+  9:  'rgba(255,180,80,0.24)',   // amber     – Class 9
+  10: 'rgba(230,100,100,0.18)',  // rose      – Class 10
+  11: 'rgba(160,100,220,0.20)',  // violet    – Class 11
+  12: 'rgba(60,180,220,0.22)',   // sky       – Class 12
+  13: 'rgba(200,160,80,0.24)',   // gold      – Dropper
+};
 
 // ── Week helpers ──
 function ttGetMonday(d) {
@@ -1346,7 +1360,6 @@ function renderTimetableGrid() {
         const span = slot && slot.span_slots > 1 ? slot.span_slots : 1;
         const rowspanAttr = span > 1 ? ' rowspan="' + span + '"' : '';
         const borderStyle = ri === 0 ? 'border-left:2px solid var(--border);' : 'border-left:1px solid var(--border);';
-        const roomColor = TT_ROOM_COLORS[ri % TT_ROOM_COLORS.length];
         let cellBg = 'background:white;';
         let cellContent = '<div style="font-size:0.65rem;color:#ccc;">+</div>';
         if (slot) {
@@ -1355,7 +1368,8 @@ function renderTimetableGrid() {
           const cls = slot.class_level ? (slot.class_level === 13 ? 'Dropper' : 'Cl ' + slot.class_level) : '';
           const brd = (slot.board && slot.board !== 'All') ? slot.board : '';
           const noteStr = slot.notes ? '<div style="font-size:0.6rem;color:var(--muted);font-style:italic;margin-top:1px;">' + slot.notes + '</div>' : '';
-          cellBg = 'background:' + roomColor + ';';
+          const classColor = slot.class_level ? (TT_CLASS_COLORS[slot.class_level] || 'rgba(180,180,180,0.18)') : 'rgba(180,180,180,0.18)';
+          cellBg = 'background:' + classColor + ';';
           cellContent =
             '<div style="font-size:0.72rem;font-weight:700;color:var(--navy);line-height:1.2;">' + subName + '</div>' +
             (cls ? '<div style="font-size:0.65rem;color:#555;margin-top:1px;">' + cls + (brd ? ' ' + brd : '') + '</div>' : '') +
