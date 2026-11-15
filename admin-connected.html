@@ -1951,7 +1951,7 @@ async function addStudent() {
 
   try {
     const { data: { session } } = await sb.auth.getSession();
-    // Pass a temporary password; we'll reset it to FirstName+last4roll once roll number is returned
+    // Use a temp password; we'll reset to FirstName+last4roll once roll number is known
     const tempPassword = 'TmpPass_' + Math.random().toString(36).slice(2,8);
     const response = await fetch(
       'https://gaizlwyhthiqguqjfyuq.supabase.co/functions/v1/create-student',
@@ -1962,28 +1962,30 @@ async function addStudent() {
           'Authorization': 'Bearer ' + session.access_token
         },
         body: JSON.stringify({
-          name, password: tempPassword, cls, board,
-          comp: comp || null,
-          phone: phone || null,
-          parentName: pname || null,
-          parentPhone: pphone || null
+          full_name: name,
+          password: tempPassword,
+          class_level: parseInt(cls),
+          board,
+          parent_name: pname || null,
+          parent_phone: pphone || null
         })
       }
     );
 
     let result;
     try { result = await response.json(); } catch(e) { throw new Error('Server returned invalid response (status ' + response.status + ')'); }
-    if (!result.success) throw new Error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error));
+    if (result.error) throw new Error(typeof result.error === 'string' ? result.error : JSON.stringify(result.error));
 
-    // Auto-generate password: FirstName + last 4 digits of roll number
-    const roll = result.rollNumber || '';
+    const userId = result.user_id;
+
+    // Fetch the assigned roll number from the students table
+    const { data: stuRow } = await sb.from('students').select('roll_number').eq('user_id', userId).single();
+    const roll = stuRow ? stuRow.roll_number : '';
     const last4 = String(roll).slice(-4);
     const autoPassword = fname + last4;
 
-    // Update the student's password to match the formula
-    if (result.userId) {
-      await sb.rpc('reset_user_password', { p_user_id: result.userId, p_new_password: autoPassword });
-    }
+    // Set final password to FirstName+last4roll
+    await sb.rpc('reset_user_password', { p_user_id: userId, p_new_password: autoPassword });
 
     toast('Student created! Roll No: ' + roll);
     alert('Student account created!\n\nRoll Number: ' + roll + '\nPassword: ' + autoPassword + '\n\nShare these with the student. They log in with Roll Number + Password.');
