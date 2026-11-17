@@ -100,9 +100,18 @@
   .notif-time-sm{font-size:0.68rem;color:var(--muted);margin-top:3px;}
 
   /* NOTES GRID */
-  .chip-bar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:18px;}
+  .chip-bar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;}
   .chip{padding:5px 13px;border-radius:20px;font-size:0.77rem;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:white;color:var(--navy);transition:all 0.15s;}
   .chip.active{background:var(--navy);color:var(--cream);border-color:var(--navy);}
+  .chip.type-chip.active{background:var(--gold);color:var(--navy-deep);border-color:var(--gold);}
+  .notes-search{display:flex;align-items:center;gap:10px;background:white;border:1.5px solid var(--border);border-radius:10px;padding:8px 14px;margin-bottom:14px;}
+  .notes-search input{border:none;outline:none;width:100%;font-size:0.88rem;color:var(--navy);background:transparent;}
+  .notes-search input::placeholder{color:var(--muted);}
+  .notes-filter-row{display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .notes-filter-label{font-size:0.72rem;font-weight:700;color:var(--muted);letter-spacing:0.5px;text-transform:uppercase;margin-right:2px;}
+  .folder-badge{display:inline-block;font-size:0.63rem;font-weight:700;padding:2px 7px;border-radius:8px;letter-spacing:0.5px;text-transform:uppercase;}
+  .folder-badge.qb{background:#e8f0fe;color:#1a2e5a;}
+  .folder-badge.pt{background:#fff3e0;color:#b45309;}
   .notes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
   .note-card{background:white;border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;position:relative;}
   .note-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,46,90,0.08);}
@@ -277,6 +286,13 @@
 <!-- NOTES -->
 <div class="page" id="page-notes">
   <div class="ph"><div><div class="pt">My Notes</div><div class="ps" id="notes-sub">Loading…</div></div></div>
+  <div class="notes-search"><span style="font-size:1rem;color:var(--muted)">🔍</span><input type="text" id="notes-search-input" placeholder="Search notes by title or subject…" oninput="applyNotesFilters()"></div>
+  <div class="notes-filter-row">
+    <span class="notes-filter-label">Type:</span>
+    <div class="chip type-chip active" id="chip-type-all" onclick="setNotesTypeFilter(null,this)">All</div>
+    <div class="chip type-chip" id="chip-type-qb" onclick="setNotesTypeFilter('Question Bank',this)">📚 Question Bank</div>
+    <div class="chip type-chip" id="chip-type-pt" onclick="setNotesTypeFilter('Practice Test',this)">✏️ Practice Test</div>
+  </div>
   <div class="chip-bar" id="subject-chips"><div class="chip active" onclick="filterNotes(null,this)">All Subjects</div></div>
   <div class="notes-grid" id="notes-grid"><div class="skeleton" style="height:180px;border-radius:12px;"></div><div class="skeleton" style="height:180px;border-radius:12px;"></div><div class="skeleton" style="height:180px;border-radius:12px;"></div></div>
 </div>
@@ -550,41 +566,62 @@ function renderDashboard() {
 
 // ── Render notes ──
 let currentSubjectFilter = null;
+let currentTypeFilter = null; // null=All, 'Question Bank', 'Practice Test'
+
 function renderNotes() {
-  const filtered = currentSubjectFilter
-    ? allContent.filter(c => c.type === 'pdf' && c.subjects?.name === currentSubjectFilter)
-    : allContent.filter(c => c.type === 'pdf');
-  document.getElementById('notes-sub').textContent = filtered.length + ' notes available';
+  // Build subject chips once
   const subjects = [...new Set(allContent.filter(c => c.type === 'pdf').map(c => c.subjects?.name).filter(Boolean))];
   const chipsEl = document.getElementById('subject-chips');
   if (chipsEl.children.length <= 1) {
+    chipsEl.innerHTML = '';
     const allChip = document.createElement('div');
-    allChip.className = 'chip' + (!currentSubjectFilter ? ' active' : '');
+    allChip.className = 'chip active';
     allChip.textContent = 'All Subjects';
     allChip.onclick = function() { filterNotes(null, this); };
-    chipsEl.innerHTML = '';
     chipsEl.appendChild(allChip);
     subjects.forEach(function(s) {
       const chip = document.createElement('div');
-      chip.className = 'chip' + (currentSubjectFilter === s ? ' active' : '');
+      chip.className = 'chip';
       chip.textContent = s;
       chip.onclick = function() { filterNotes(s, this); };
       chipsEl.appendChild(chip);
     });
   }
+  applyNotesFilters();
+}
+
+function applyNotesFilters() {
+  const searchTerm = (document.getElementById('notes-search-input')?.value || '').trim().toLowerCase();
+  let filtered = allContent.filter(c => c.type === 'pdf');
+  if (currentSubjectFilter) filtered = filtered.filter(c => c.subjects?.name === currentSubjectFilter);
+  if (currentTypeFilter) filtered = filtered.filter(c => c.folder === currentTypeFilter);
+  if (searchTerm) filtered = filtered.filter(c =>
+    (c.title || '').toLowerCase().includes(searchTerm) ||
+    (c.subjects?.name || '').toLowerCase().includes(searchTerm) ||
+    (c.description || '').toLowerCase().includes(searchTerm)
+  );
+  const totalPdfs = allContent.filter(c => c.type === 'pdf').length;
+  document.getElementById('notes-sub').textContent = filtered.length === totalPdfs
+    ? filtered.length + ' notes available'
+    : filtered.length + ' of ' + totalPdfs + ' notes';
   const grid = document.getElementById('notes-grid');
   if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="ei">\u{1F4C4}</div><div class="et">No notes yet</div></div>';
+    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="ei">📄</div><div class="et">No notes found</div><div class="es">Try a different filter or search term.</div></div>';
     return;
   }
+  const folderLabel = {
+    'Question Bank': '<span class="folder-badge qb">Question Bank</span>',
+    'Practice Test': '<span class="folder-badge pt">Practice Test</span>'
+  };
   grid.innerHTML = filtered.map(function(n) {
     const isNew = (Date.now() - new Date(n.created_at)) < 86400000 * 2;
     const fileBtn = n.file_url
-      ? '<button class="dl-btn" onclick="openFile(this)" data-url="' + n.file_url + '">\u2193 PDF</button>'
+      ? '<button class="dl-btn" onclick="openFile(this)" data-url="' + n.file_url + '">↓ PDF</button>'
       : '<span style="color:var(--muted);font-size:0.7rem">No file</span>';
+    const badge = n.folder ? (folderLabel[n.folder] || '') : '';
     return '<div class="note-card">' +
       (isNew ? '<div class="nc-badge">NEW</div>' : '') +
-      '<div class="nc-subj" style="color:var(--gold)">' + (n.subjects?.name || 'General') + '</div>' +
+      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><div class="nc-subj" style="color:var(--gold);margin-bottom:0">' + (n.subjects?.name || 'General') + '</div>' + badge + '</div>' +
       '<div class="nc-title">' + n.title + '</div>' +
       '<div class="nc-preview">' + (n.description || 'Study material uploaded by your teacher.') + '</div>' +
       '<div class="nc-footer"><span>' + timeAgo(n.created_at) + '</span>' + fileBtn + '</div>' +
@@ -596,30 +633,15 @@ function filterNotes(subject, clickedChip) {
   currentSubjectFilter = subject;
   document.querySelectorAll('#subject-chips .chip').forEach(c => c.classList.remove('active'));
   if (clickedChip) clickedChip.classList.add('active');
-  const filtered = currentSubjectFilter
-    ? allContent.filter(c => c.type === 'pdf' && c.subjects?.name === currentSubjectFilter)
-    : allContent.filter(c => c.type === 'pdf');
-  document.getElementById('notes-sub').textContent = filtered.length + ' notes available';
-  const grid = document.getElementById('notes-grid');
-  if (filtered.length === 0) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="ei">📄</div><div class="et">No notes for this subject</div></div>';
-    return;
-  }
-  grid.innerHTML = filtered.map(function(n) {
-    const isNew = (Date.now() - new Date(n.created_at)) < 86400000 * 2;
-    const fileBtn = n.file_url
-      ? '<button class="dl-btn" onclick="openFile(this)" data-url="' + n.file_url + '">↓ PDF</button>'
-      : '<span style="color:var(--muted);font-size:0.7rem">No file</span>';
-    return '<div class="note-card">' +
-      (isNew ? '<div class="nc-badge">NEW</div>' : '') +
-      '<div class="nc-subj" style="color:var(--gold)">' + (n.subjects?.name || 'General') + '</div>' +
-      '<div class="nc-title">' + n.title + '</div>' +
-      '<div class="nc-preview">' + (n.description || 'Study material uploaded by your teacher.') + '</div>' +
-      '<div class="nc-footer"><span>' + timeAgo(n.created_at) + '</span>' + fileBtn + '</div>' +
-      '</div>';
-  }).join('');
+  applyNotesFilters();
 }
 
+function setNotesTypeFilter(type, clickedChip) {
+  currentTypeFilter = type;
+  document.querySelectorAll('.type-chip').forEach(c => c.classList.remove('active'));
+  if (clickedChip) clickedChip.classList.add('active');
+  applyNotesFilters();
+}
 // ── Render videos ──
 function renderVideos() {
   const videos = allContent.filter(c=>c.type==='video_upload'||c.type==='youtube_link');
