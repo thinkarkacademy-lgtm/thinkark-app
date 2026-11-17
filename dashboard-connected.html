@@ -112,6 +112,9 @@
   .folder-badge{display:inline-block;font-size:0.63rem;font-weight:700;padding:2px 7px;border-radius:8px;letter-spacing:0.5px;text-transform:uppercase;}
   .folder-badge.qb{background:#e8f0fe;color:#1a2e5a;}
   .folder-badge.pt{background:#fff3e0;color:#b45309;}
+  .notes-section-header{display:flex;align-items:center;gap:10px;padding:10px 0 6px;border-bottom:2px solid var(--navy-deep);margin-bottom:4px;}
+  .notes-section-title{font-size:1rem;font-weight:800;color:var(--navy-deep);font-family:'Barlow Condensed',sans-serif;letter-spacing:0.5px;text-transform:uppercase;}
+  .notes-section-count{font-size:0.72rem;font-weight:600;color:var(--muted);background:var(--border);padding:2px 8px;border-radius:10px;}
   .notes-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
   .note-card{background:white;border:1px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:transform 0.15s,box-shadow 0.15s;position:relative;}
   .note-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(26,46,90,0.08);}
@@ -613,7 +616,7 @@ function applyNotesFilters() {
     'Question Bank': '<span class="folder-badge qb">Question Bank</span>',
     'Practice Test': '<span class="folder-badge pt">Practice Test</span>'
   };
-  grid.innerHTML = filtered.map(function(n) {
+  function noteCard(n) {
     const isNew = (Date.now() - new Date(n.created_at)) < 86400000 * 2;
     const fileBtn = n.file_url
       ? '<button class="dl-btn" onclick="openFile(this)" data-url="' + n.file_url + '">↓ PDF</button>'
@@ -626,9 +629,23 @@ function applyNotesFilters() {
       '<div class="nc-preview">' + (n.description || 'Study material uploaded by your teacher.') + '</div>' +
       '<div class="nc-footer"><span>' + timeAgo(n.created_at) + '</span>' + fileBtn + '</div>' +
       '</div>';
-  }).join('');
+  }
+  // Group by subject when no specific subject is selected
+  if (!currentSubjectFilter && !searchTerm) {
+    const subjectOrder = [...new Set(filtered.map(n => n.subjects?.name || 'General'))];
+    let html = '';
+    subjectOrder.forEach(function(subj) {
+      const group = filtered.filter(n => (n.subjects?.name || 'General') === subj);
+      html += '<div class="notes-section-header" style="grid-column:1/-1">' +
+        '<span class="notes-section-title">' + subj + '</span>' +
+        '<span class="notes-section-count">' + group.length + ' note' + (group.length !== 1 ? 's' : '') + '</span>' +
+        '</div>' + group.map(noteCard).join('');
+    });
+    grid.innerHTML = html;
+  } else {
+    grid.innerHTML = filtered.map(noteCard).join('');
+  }
 }
-
 function filterNotes(subject, clickedChip) {
   currentSubjectFilter = subject;
   document.querySelectorAll('#subject-chips .chip').forEach(c => c.classList.remove('active'));
