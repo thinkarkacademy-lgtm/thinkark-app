@@ -1913,9 +1913,22 @@ function renderStudents() {
 }
 
 async function deleteStudent(id) {
-  if (!confirm('Remove this student? This cannot be undone.')) return;
-  await sb.from('students').delete().eq('id', id);
-  toast('Student removed.');
+  if (!confirm('Remove this student? This will permanently delete their account and login access. This cannot be undone.')) return;
+
+  // Look up user_id from the already-loaded list
+  const stu = allStudents.find(s => s.id === id);
+  const userId = stu ? stu.user_id : null;
+
+  if (userId) {
+    // delete_user_account RPC removes students row + public.users + auth.users
+    const { error } = await sb.rpc('delete_user_account', { p_user_id: userId });
+    if (error) { toast('Error: ' + error.message, 'error'); return; }
+  } else {
+    // Fallback: no user_id found, delete students row only
+    await sb.from('students').delete().eq('id', id);
+  }
+
+  toast('Student removed and account deleted.');
   await loadStudents(); renderStudents();
 }
 
