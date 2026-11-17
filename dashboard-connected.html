@@ -655,6 +655,26 @@ async function markRead(notifId, el) {
   if (!studentData) return;
   await sb.from('notification_reads').upsert({ notification_id: notifId, user_id: currentUser.id });
   el.classList.remove('unread');
+  // Update local data so counts stay accurate
+  const n = allNotifications.find(x => x.id === notifId);
+  if (n && !n.notification_reads?.length) n.notification_reads = [{ read_at: new Date().toISOString() }];
+}
+
+async function markAllNotifsRead() {
+  if (!studentData || !currentUser) return;
+  const unread = allNotifications.filter(n => !n.notification_reads?.length);
+  if (unread.length === 0) return;
+  // Batch upsert all unread
+  const rows = unread.map(n => ({ notification_id: n.id, user_id: currentUser.id }));
+  await sb.from('notification_reads').upsert(rows);
+  // Update local cache
+  allNotifications.forEach(n => {
+    if (!n.notification_reads?.length) n.notification_reads = [{ read_at: new Date().toISOString() }];
+  });
+  // Clear badge and dot
+  document.getElementById('nb-notif').textContent = '';
+  const dot = document.getElementById('notif-dot');
+  if (dot) dot.style.display = 'none';
 }
 
 // ── Render attendance ──
@@ -856,7 +876,7 @@ function showPage(id, navEl) {
   // Lazy render on first visit
   if (id==='notes') renderNotes();
   if (id==='videos') renderVideos();
-  if (id==='notifications') renderNotifications();
+  if (id==='notifications') { markAllNotifsRead(); renderNotifications(); }
   if (id==='attendance') renderAttendance();
   if (id==='performance') renderPerformance();
   if (id==='exams') renderExams();
